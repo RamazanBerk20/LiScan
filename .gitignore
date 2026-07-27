@@ -10,4 +10,10 @@ src-tauri/target/
 *.AppImage
 *.deb
 *.rpm
+packaging/aur/*/src/
+packaging/aur/*/pkg/
+packaging/aur/*/liscan/
+packaging/aur/*/*.pkg.tar.*
+packaging/aur/*/*.tar.gz
+packaging/aur/*/LICENSE-*
 .DS_Store
