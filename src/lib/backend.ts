@@ -156,6 +156,7 @@ const demoTree: ViewNode = {
 };
 
 const defaultSettings: Settings = {
+  language: "system",
   theme: "system",
   colorScheme: "system",
   byteUnitScale: "binary",
@@ -215,6 +216,15 @@ export async function listVolumes(): Promise<VolumeInfo[]> {
 export async function getHomePath(): Promise<string> {
   if (!isTauri()) return "/home/alex";
   return invoke<string>("get_home_path");
+}
+
+export async function getSystemLanguages(): Promise<string[]> {
+  if (!isTauri()) {
+    return navigator.languages.length > 0
+      ? [...navigator.languages]
+      : [navigator.language];
+  }
+  return invoke<string[]>("get_system_languages");
 }
 
 export async function getLaunchRequest(): Promise<ScanRequest | null> {

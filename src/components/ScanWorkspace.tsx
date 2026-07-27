@@ -41,6 +41,7 @@ import type {
 } from "../types";
 import { getNode, performFileAction } from "../lib/backend";
 import { formatBytes, formatCount } from "../lib/format";
+import { useI18n } from "../lib/i18n";
 import { AdminBadge, LiScanMark } from "./Brand";
 import { DeleteDialog } from "./Dialogs";
 import { RadialMap } from "./RadialMap";
@@ -119,10 +120,14 @@ function ItemMenu({
   onAction: (action: string) => void;
   onCenter: () => void;
 }) {
+  const { locale, t } = useI18n();
   return (
-    <DropdownMenu.Root>
+    <DropdownMenu.Root dir={locale === "ar" ? "rtl" : "ltr"}>
       <DropdownMenu.Trigger asChild>
-        <button className="icon-button row-menu-button" aria-label="Item actions">
+        <button
+          className="icon-button row-menu-button"
+          aria-label={t("itemActions")}
+        >
           <DotsThree size={19} weight="bold" />
         </button>
       </DropdownMenu.Trigger>
@@ -134,12 +139,12 @@ function ItemMenu({
         >
           <DropdownMenu.Item className="menu-item" onSelect={() => onAction("open")}>
             <FolderOpen size={17} />
-            Open
+            {t("open")}
           </DropdownMenu.Item>
           {node.kind === "directory" && (
             <DropdownMenu.Item className="menu-item" onSelect={onCenter}>
               <ChartDonut size={17} />
-              Center map here
+              {t("centerMapHere")}
             </DropdownMenu.Item>
           )}
           <DropdownMenu.Item
@@ -147,21 +152,21 @@ function ItemMenu({
             onSelect={() => onAction("reveal")}
           >
             <Folder size={17} />
-            Open in file manager
+            {t("openInFileManager")}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="menu-item"
             onSelect={() => onAction("terminal")}
           >
             <Terminal size={17} />
-            Open terminal here
+            {t("openTerminalHere")}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="menu-item"
             onSelect={() => onAction("copy_path")}
           >
             <Clipboard size={17} />
-            Copy path
+            {t("copyPath")}
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="menu-separator" />
           <DropdownMenu.Item
@@ -169,14 +174,14 @@ function ItemMenu({
             onSelect={() => onAction("trash")}
           >
             <Trash size={17} />
-            Move to Trash
+            {t("moveToTrash")}
           </DropdownMenu.Item>
           <DropdownMenu.Item
             className="menu-item menu-item--danger"
             onSelect={() => onAction("request_delete")}
           >
             <Warning size={17} />
-            Permanently delete
+            {t("permanentlyDelete")}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
@@ -214,6 +219,7 @@ export function ScanWorkspace({
   onViewDepth,
   onNotify
 }: ScanWorkspaceProps) {
+  const { locale, t } = useI18n();
   const [selected, setSelected] = useState<NodeDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -261,9 +267,9 @@ export function ScanWorkspace({
       const output = await performFileAction(scanId, node.id, action);
       if (action === "copy_path" && output) {
         await writeText(output);
-        onNotify("Path copied");
+        onNotify(t("pathCopied"));
       } else if (action === "trash") {
-        onNotify(`${node.name} moved to Trash`);
+        onNotify(t("movedToTrash", { name: node.name }));
         onSelect(null);
         onReload();
       }
@@ -274,16 +280,16 @@ export function ScanWorkspace({
 
   const statusLabel =
     status === "authorizing"
-      ? "Waiting for administrator authentication"
+      ? t("statusWaitingAuthentication")
       : status === "scanning"
-        ? "Scanning"
+        ? t("statusScanning")
         : status === "complete_with_issues"
-          ? "Completed with issues"
+          ? t("statusCompletedWithIssues")
           : status === "cancelled"
-            ? "Partial scan"
+            ? t("statusPartialScan")
             : status === "failed"
-              ? "Scan failed"
-              : "Scan complete";
+              ? t("statusScanFailed")
+              : t("statusScanComplete");
 
   return (
     <div
@@ -292,29 +298,37 @@ export function ScanWorkspace({
       }`}
     >
       <header className="workspace-header">
-        <button className="brand-button" onClick={onOverview} aria-label="Overview">
+        <button
+          className="brand-button"
+          onClick={onOverview}
+          aria-label={t("overview")}
+        >
           <LiScanMark compact />
         </button>
         <div className="workspace-nav">
-          <ToolbarButton label="Back" disabled={!canGoBack} onClick={onBack}>
+          <ToolbarButton label={t("back")} disabled={!canGoBack} onClick={onBack}>
             <ArrowLeft size={18} />
           </ToolbarButton>
           <ToolbarButton
-            label="Forward"
+            label={t("forward")}
             disabled={!canGoForward}
             onClick={onForward}
           >
             <ArrowRight size={18} />
           </ToolbarButton>
           <ToolbarButton
-            label="Parent folder"
+            label={t("parentFolder")}
             disabled={!view?.parentId || running}
             onClick={onUp}
           >
             <ArrowUp size={18} />
           </ToolbarButton>
         </div>
-        <div className="path-bar" title={view?.displayPath ?? target}>
+        <div
+          className="path-bar"
+          title={view?.displayPath ?? target}
+          dir="auto"
+        >
           <Folder size={16} weight="fill" />
           <span>{view?.displayPath ?? target}</span>
         </div>
@@ -322,20 +336,26 @@ export function ScanWorkspace({
           {running ? (
             <button className="button button--stop" onClick={onCancel}>
               <Stop size={16} weight="fill" />
-              Stop
+              {t("stop")}
             </button>
           ) : (
-            <ToolbarButton label="Rescan" onClick={onRescan}>
+            <ToolbarButton label={t("rescan")} onClick={onRescan}>
               <ArrowCounterClockwise size={18} />
             </ToolbarButton>
           )}
-          <ToolbarButton label="Zoom in" onClick={() => onViewDepth(Math.max(2, viewDepth - 1))}>
+          <ToolbarButton
+            label={t("zoomIn")}
+            onClick={() => onViewDepth(Math.max(2, viewDepth - 1))}
+          >
             <MagnifyingGlassPlus size={18} />
           </ToolbarButton>
-          <ToolbarButton label="Zoom out" onClick={() => onViewDepth(Math.min(6, viewDepth + 1))}>
+          <ToolbarButton
+            label={t("zoomOut")}
+            onClick={() => onViewDepth(Math.min(6, viewDepth + 1))}
+          >
             <MagnifyingGlassMinus size={18} />
           </ToolbarButton>
-          <ToolbarButton label="Settings" onClick={onSettings}>
+          <ToolbarButton label={t("settings")} onClick={onSettings}>
             <Gear size={19} />
           </ToolbarButton>
         </div>
@@ -365,17 +385,33 @@ export function ScanWorkspace({
           <div className="scan-status__metrics">
             {progress && running && (
               <>
-                <span>{formatCount(progress.filesScanned)} files</span>
                 <span>
-                  {formatBytes(progress.bytesScanned, settings.byteUnitScale)}
+                  {t("filesCount", {
+                    count: formatCount(progress.filesScanned, locale)
+                  })}
+                </span>
+                <span>
+                  {formatBytes(
+                    progress.bytesScanned,
+                    settings.byteUnitScale,
+                    locale
+                  )}
                 </span>
               </>
             )}
             {summary && !running && (
               <>
-                <span>{formatCount(summary.files)} files</span>
                 <span>
-                  {formatBytes(summary.allocatedBytes, settings.byteUnitScale)}
+                  {t("filesCount", {
+                    count: formatCount(summary.files, locale)
+                  })}
+                </span>
+                <span>
+                  {formatBytes(
+                    summary.allocatedBytes,
+                    settings.byteUnitScale,
+                    locale
+                  )}
                 </span>
               </>
             )}
@@ -386,23 +422,26 @@ export function ScanWorkspace({
             >
               {running ? (
                 <>
-                  <Info size={14} /> Coverage pending
+                  <Info size={14} /> {t("coveragePending")}
                 </>
               ) : status === "failed" ? (
                 <>
-                  <Warning size={14} /> Coverage unavailable
+                  <Warning size={14} /> {t("coverageUnavailable")}
                 </>
               ) : status === "cancelled" ? (
                 <>
-                  <Info size={14} /> Partial coverage
+                  <Info size={14} /> {t("partialCoverage")}
                 </>
               ) : issues.length === 0 ? (
                 <>
-                  <Check size={14} /> Full coverage
+                  <Check size={14} /> {t("fullCoverage")}
                 </>
               ) : (
                 <>
-                  <Info size={14} /> {issues.length} reports
+                  <Info size={14} />{" "}
+                  {t("reportsCount", {
+                    count: formatCount(issues.length, locale)
+                  })}
                 </>
               )}
             </button>
@@ -428,32 +467,41 @@ export function ScanWorkspace({
             <span />
             <span />
           </div>
-          <h1>{status === "authorizing" ? "Authentication required" : "Reading folders"}</h1>
-          <p className="scanning-path">
+          <h1>
+            {status === "authorizing"
+              ? t("authenticationRequired")
+              : t("readingFolders")}
+          </h1>
+          <p className="scanning-path" dir="auto">
             {progress?.currentPath || target}
           </p>
           <div className="scanning-stats">
             <div>
-              <strong>{formatCount(progress?.directoriesScanned ?? 0)}</strong>
-              <span>Folders</span>
+              <strong>
+                {formatCount(progress?.directoriesScanned ?? 0, locale)}
+              </strong>
+              <span>{t("folders")}</span>
             </div>
             <div>
-              <strong>{formatCount(progress?.filesScanned ?? 0)}</strong>
-              <span>Files</span>
+              <strong>
+                {formatCount(progress?.filesScanned ?? 0, locale)}
+              </strong>
+              <span>{t("files")}</span>
             </div>
             <div>
               <strong>
                 {formatBytes(
                   progress?.bytesScanned ?? 0,
-                  settings.byteUnitScale
+                  settings.byteUnitScale,
+                  locale
                 )}
               </strong>
-              <span>Counted</span>
+              <span>{t("counted")}</span>
             </div>
           </div>
           <button className="button button--quiet-border" onClick={onCancel}>
             <X size={16} />
-            Cancel scan
+            {t("cancelScan")}
           </button>
         </main>
       ) : view ? (
@@ -463,20 +511,27 @@ export function ScanWorkspace({
           }`}
         >
           {settings.showSidebar && (
-            <aside className="folder-sidebar" aria-label="Files and folders">
+            <aside
+              className="folder-sidebar"
+              aria-label={t("filesAndFolders")}
+            >
               <div className="sidebar-heading">
                 <div>
                   <List size={17} />
-                  <strong>Largest first</strong>
+                  <strong>{t("largestFirst")}</strong>
                 </div>
-                <span>{formatCount(children.length)} items</span>
+                <span>
+                  {t("itemsCount", {
+                    count: formatCount(children.length, locale)
+                  })}
+                </span>
               </div>
               <div className="file-list" role="tree">
                 {visibleChildren.length === 0 ? (
                   <div className="empty-list">
                     <Folder size={27} weight="duotone" />
-                    <strong>No files shown</strong>
-                    <span>This folder is empty or entirely excluded.</span>
+                    <strong>{t("noFilesShown")}</strong>
+                    <span>{t("emptyOrExcluded")}</span>
                   </div>
                 ) : (
                   visibleChildren.map((node) => (
@@ -508,17 +563,30 @@ export function ScanWorkspace({
                         )}
                       </span>
                       <span className="file-row__name">
-                        <strong title={node.name}>{node.name}</strong>
+                        <strong title={node.name} dir="auto">
+                          {node.kind === "small_files"
+                            ? t("nodeSmallFiles")
+                            : node.name}
+                        </strong>
                         <small>
                           {node.kind === "directory"
-                            ? `${formatCount(node.fileCount)} files`
-                            : node.kind}
+                            ? t("filesCount", {
+                                count: formatCount(node.fileCount, locale)
+                              })
+                            : node.kind === "file"
+                              ? t("nodeFile")
+                              : node.kind === "symlink"
+                                ? t("nodeSymlink")
+                                : node.kind === "small_files"
+                                  ? t("nodeSmallFiles")
+                                  : t("nodeOther")}
                         </small>
                       </span>
                       <span className="file-row__size">
                         {formatBytes(
                           node.allocatedBytes,
-                          settings.byteUnitScale
+                          settings.byteUnitScale,
+                          locale
                         )}
                       </span>
                       <ItemMenu
@@ -540,9 +608,11 @@ export function ScanWorkspace({
                               );
                               if (action === "copy_path" && output) {
                                 await writeText(output);
-                                onNotify("Path copied");
+                                onNotify(t("pathCopied"));
                               } else if (action === "trash") {
-                                onNotify(`${node.name} moved to Trash`);
+                                onNotify(
+                                  t("movedToTrash", { name: node.name })
+                                );
                                 onSelect(null);
                                 onReload();
                               }
@@ -560,7 +630,12 @@ export function ScanWorkspace({
                     className="load-more"
                     onClick={() => setVisibleRows((count) => count + 240)}
                   >
-                    Show {Math.min(240, children.length - visibleRows)} more
+                    {t("showMore", {
+                      count: formatCount(
+                        Math.min(240, children.length - visibleRows),
+                        locale
+                      )
+                    })}
                   </button>
                 )}
               </div>
@@ -579,17 +654,17 @@ export function ScanWorkspace({
             />
             <div className="map-legend">
               <span>
-                <i className="legend-folder" /> Folders
+                <i className="legend-folder" /> {t("mapFolders")}
               </span>
               <span>
-                <i className="legend-file" /> Files and grouped items
+                <i className="legend-file" /> {t("mapFilesGrouped")}
               </span>
-              <small>Click a folder to center the map</small>
+              <small>{t("centerMapHint")}</small>
             </div>
           </section>
 
           {selected && (
-            <aside className="detail-panel" aria-label="Item details">
+            <aside className="detail-panel" aria-label={t("itemDetails")}>
               <div className="detail-heading">
                 <span className={`detail-icon detail-icon--${selected.kind}`}>
                   {selected.kind === "directory" ? (
@@ -599,12 +674,14 @@ export function ScanWorkspace({
                   )}
                 </span>
                 <div>
-                  <h2>{selected.name}</h2>
-                  <p title={selected.displayPath}>{selected.displayPath}</p>
+                  <h2 dir="auto">{selected.name}</h2>
+                  <p title={selected.displayPath} dir="auto">
+                    {selected.displayPath}
+                  </p>
                 </div>
                 <button
                   className="icon-button"
-                  aria-label="Close details"
+                  aria-label={t("closeDetails")}
                   onClick={() => onSelect(null)}
                 >
                   <X size={18} />
@@ -620,45 +697,51 @@ export function ScanWorkspace({
                 <>
                   <dl className="detail-stats">
                     <div>
-                      <dt>Disk usage</dt>
+                      <dt>{t("diskUsage")}</dt>
                       <dd>
                         {formatBytes(
                           selected.allocatedBytes,
-                          settings.byteUnitScale
+                          settings.byteUnitScale,
+                          locale
                         )}
                       </dd>
                     </div>
                     <div>
-                      <dt>Apparent size</dt>
+                      <dt>{t("apparentSize")}</dt>
                       <dd>
                         {formatBytes(
                           selected.apparentBytes,
-                          settings.byteUnitScale
+                          settings.byteUnitScale,
+                          locale
                         )}
                       </dd>
                     </div>
                     {selected.kind === "directory" && (
                       <>
                         <div>
-                          <dt>Files</dt>
-                          <dd>{formatCount(selected.fileCount)}</dd>
+                          <dt>{t("files")}</dt>
+                          <dd>{formatCount(selected.fileCount, locale)}</dd>
                         </div>
                         <div>
-                          <dt>Folders</dt>
-                          <dd>{formatCount(selected.directoryCount)}</dd>
+                          <dt>{t("folders")}</dt>
+                          <dd>
+                            {formatCount(selected.directoryCount, locale)}
+                          </dd>
                         </div>
                       </>
                     )}
                     {selected.permissions && (
                       <div>
-                        <dt>Permissions</dt>
-                        <dd className="mono">{selected.permissions}</dd>
+                        <dt>{t("permissions")}</dt>
+                        <dd className="mono" dir="ltr">
+                          {selected.permissions}
+                        </dd>
                       </div>
                     )}
                     {selected.hardLinks > 1 && (
                       <div>
-                        <dt>Hard links</dt>
-                        <dd>{selected.hardLinks}</dd>
+                        <dt>{t("hardLinks")}</dt>
+                        <dd>{formatCount(selected.hardLinks, locale)}</dd>
                       </div>
                     )}
                   </dl>
@@ -676,7 +759,9 @@ export function ScanWorkspace({
                       ) : (
                         <FolderOpen size={17} />
                       )}
-                      {selected.kind === "directory" ? "Center map" : "Open"}
+                      {selected.kind === "directory"
+                        ? t("centerMap")
+                        : t("open")}
                     </button>
                     <div className="detail-action-grid">
                       <button
@@ -684,14 +769,14 @@ export function ScanWorkspace({
                         onClick={() => void runAction("reveal")}
                       >
                         <Folder size={16} />
-                        File manager
+                        {t("fileManager")}
                       </button>
                       <button
                         className="button button--quiet-border"
                         onClick={() => void runAction("copy_path")}
                       >
                         <Clipboard size={16} />
-                        Copy path
+                        {t("copyPath")}
                       </button>
                       {selected.uri.startsWith("file:") && (
                         <button
@@ -699,7 +784,7 @@ export function ScanWorkspace({
                           onClick={() => void runAction("terminal")}
                         >
                           <Terminal size={16} />
-                          Terminal
+                          {t("terminal")}
                         </button>
                       )}
                       {selected.parentId !== null && (
@@ -708,7 +793,7 @@ export function ScanWorkspace({
                           onClick={() => void runAction("trash")}
                         >
                           <Trash size={16} />
-                          Trash
+                          {t("trash")}
                         </button>
                       )}
                     </div>
@@ -718,7 +803,7 @@ export function ScanWorkspace({
                       className="danger-link"
                       onClick={() => setDeleteOpen(true)}
                     >
-                      Permanently delete
+                      {t("permanentlyDelete")}
                     </button>
                   )}
                 </>
@@ -731,17 +816,14 @@ export function ScanWorkspace({
           <span>
             <Warning size={28} weight="fill" />
           </span>
-          <h1>LiScan could not complete this scan</h1>
-          <p>
-            Check that the location still exists and that the required
-            filesystem backend is installed.
-          </p>
+          <h1>{t("scanFailureTitle")}</h1>
+          <p>{t("scanFailureDescription")}</p>
           <div>
             <button className="button button--primary" onClick={onRescan}>
-              Try again
+              {t("tryAgain")}
             </button>
             <button className="button button--quiet" onClick={onOverview}>
-              Return to overview
+              {t("returnToOverview")}
             </button>
           </div>
         </main>
@@ -755,7 +837,7 @@ export function ScanWorkspace({
           try {
             if (!scanId || !selected) return;
             await performFileAction(scanId, selected.id, "delete");
-            onNotify(`${selected.name} permanently deleted`);
+            onNotify(t("permanentlyDeleted", { name: selected.name }));
             onSelect(null);
             onReload();
           } catch (error) {

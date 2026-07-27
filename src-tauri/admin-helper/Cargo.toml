@@ -1,6 +1,6 @@
 [package]
 name = "liscan-admin-helper"
-version = "0.1.0"
+version = "1.0.0"
 description = "Metadata-only administrator scan helper for LiScan"
 authors = ["LiScan contributors"]
 license = "GPL-3.0-or-later"

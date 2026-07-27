@@ -132,6 +132,60 @@ pub fn get_home_path() -> Result<String, String> {
         .ok_or_else(|| "The home folder could not be determined".into())
 }
 
+fn normalize_locale(value: &str) -> Option<String> {
+    let locale = value
+        .trim()
+        .split(['.', '@'])
+        .next()
+        .unwrap_or_default()
+        .replace('_', "-");
+    let base = locale
+        .split('-')
+        .next()
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    if locale.is_empty() || matches!(base.as_str(), "c" | "posix") {
+        None
+    } else {
+        Some(locale)
+    }
+}
+
+fn locale_candidates(
+    language: Option<&str>,
+    lc_all: Option<&str>,
+    lc_messages: Option<&str>,
+    lang: Option<&str>,
+) -> Vec<String> {
+    let mut locales = Vec::new();
+    let mut add = |value: &str| {
+        if let Some(locale) = normalize_locale(value)
+            && !locales.contains(&locale)
+        {
+            locales.push(locale);
+        }
+    };
+    if let Some(language) = language {
+        for value in language.split(':') {
+            add(value);
+        }
+    }
+    for value in [lc_all, lc_messages, lang].into_iter().flatten() {
+        add(value);
+    }
+    locales
+}
+
+#[tauri::command]
+pub fn get_system_languages() -> Vec<String> {
+    locale_candidates(
+        std::env::var("LANGUAGE").ok().as_deref(),
+        std::env::var("LC_ALL").ok().as_deref(),
+        std::env::var("LC_MESSAGES").ok().as_deref(),
+        std::env::var("LANG").ok().as_deref(),
+    )
+}
+
 fn is_remote_filesystem(file_system: &str) -> bool {
     matches!(
         file_system.to_ascii_lowercase().as_str(),
@@ -579,5 +633,26 @@ mod tests {
         assert!(is_remote_filesystem("nfs4"));
         assert!(is_remote_filesystem("fuse.sshfs"));
         assert!(!is_remote_filesystem("ext4"));
+    }
+
+    #[test]
+    fn neutral_locale_overrides_fall_back_to_the_configured_language() {
+        assert_eq!(
+            locale_candidates(None, Some("C.UTF-8"), None, Some("tr_TR.UTF-8")),
+            vec!["tr-TR"]
+        );
+    }
+
+    #[test]
+    fn language_preferences_are_normalized_and_deduplicated() {
+        assert_eq!(
+            locale_candidates(
+                Some("es_ES:fr_FR.UTF-8"),
+                Some("es_ES.UTF-8"),
+                None,
+                Some("de_DE.UTF-8")
+            ),
+            vec!["es-ES", "fr-FR", "de-DE"]
+        );
     }
 }

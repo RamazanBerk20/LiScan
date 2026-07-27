@@ -8,6 +8,16 @@
   </developer>
   <name>LiScan</name>
   <summary>Understand what uses your disk space</summary>
+  <summary xml:lang="tr">Disk alanınızı nelerin kullandığını anlayın</summary>
+  <summary xml:lang="es">Descubre qué ocupa tu espacio en disco</summary>
+  <summary xml:lang="it">Scopri cosa occupa lo spazio sul disco</summary>
+  <summary xml:lang="fr">Découvrez ce qui utilise votre espace disque</summary>
+  <summary xml:lang="de">Erkennen Sie, was Ihren Speicherplatz belegt</summary>
+  <summary xml:lang="ru">Узнайте, что занимает место на диске</summary>
+  <summary xml:lang="ar">اعرف ما الذي يستخدم مساحة القرص</summary>
+  <summary xml:lang="zh-CN">了解磁盘空间的使用情况</summary>
+  <summary xml:lang="ja">ディスク容量の使い道を確認</summary>
+  <summary xml:lang="ko">디스크 공간 사용 내역 확인</summary>
   <description>
     <p>
       LiScan is a clear, local-first disk usage analyzer for Linux. Its radial
@@ -36,6 +46,11 @@
   <url type="bugtracker">https://github.com/RamazanBerk20/LiScan/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="1.0.0" date="2026-07-27">
+      <description>
+        <p>Adds multilingual UI and system-language detection across the app and Linux integration.</p>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-07-27">
       <description>
         <p>Initial LiScan release.</p>

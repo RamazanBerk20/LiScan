@@ -1,7 +1,27 @@
 [Desktop Entry]
 Name=LiScan
 GenericName=Disk Usage Analyzer
+GenericName[tr]=Disk Kullanımı Çözümleyicisi
+GenericName[es]=Analizador de uso del disco
+GenericName[it]=Analizzatore utilizzo disco
+GenericName[fr]=Analyseur d’utilisation du disque
+GenericName[de]=Festplattenbelegungsanalyse
+GenericName[ru]=Анализатор использования диска
+GenericName[ar]=محلل استخدام القرص
+GenericName[zh_CN]=磁盘用量分析器
+GenericName[ja]=ディスク使用量アナライザー
+GenericName[ko]=디스크 사용량 분석기
 Comment=Understand what uses your disk space
+Comment[tr]=Disk alanınızı nelerin kullandığını anlayın
+Comment[es]=Descubre qué ocupa tu espacio en disco
+Comment[it]=Scopri cosa occupa lo spazio sul disco
+Comment[fr]=Découvrez ce qui utilise votre espace disque
+Comment[de]=Erkennen Sie, was Ihren Speicherplatz belegt
+Comment[ru]=Узнайте, что занимает место на диске
+Comment[ar]=اعرف ما الذي يستخدم مساحة القرص
+Comment[zh_CN]=了解磁盘空间的使用情况
+Comment[ja]=ディスク容量の使い道を確認
+Comment[ko]=디스크 공간 사용 내역 확인
 Exec=liscan %U
 Icon=io.github.liscan.LiScan
 Terminal=false
@@ -15,8 +35,28 @@ Actions=ScanHome;ScanRoot;
 
 [Desktop Action ScanHome]
 Name=Scan Home Folder
+Name[tr]=Ev Klasörünü Tara
+Name[es]=Analizar la carpeta personal
+Name[it]=Scansiona la cartella home
+Name[fr]=Analyser le dossier personnel
+Name[de]=Persönlichen Ordner scannen
+Name[ru]=Сканировать домашнюю папку
+Name[ar]=فحص المجلد الشخصي
+Name[zh_CN]=扫描主文件夹
+Name[ja]=ホームフォルダーをスキャン
+Name[ko]=홈 폴더 스캔
 Exec=liscan --home
 
 [Desktop Action ScanRoot]
 Name=Scan Root Filesystem
+Name[tr]=Kök Dosya Sistemini Tara
+Name[es]=Analizar el sistema de archivos raíz
+Name[it]=Scansiona il file system radice
+Name[fr]=Analyser le système de fichiers racine
+Name[de]=Wurzeldateisystem scannen
+Name[ru]=Сканировать корневую файловую систему
+Name[ar]=فحص نظام الملفات الجذري
+Name[zh_CN]=扫描根文件系统
+Name[ja]=ルートファイルシステムをスキャン
+Name[ko]=루트 파일 시스템 스캔
 Exec=liscan /

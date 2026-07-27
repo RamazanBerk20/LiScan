@@ -1,6 +1,6 @@
 [package]
 name = "liscan"
-version = "0.1.0"
+version = "1.0.0"
 description = "A clear, complete disk usage scanner for Linux"
 authors = ["LiScan contributors"]
 license = "GPL-3.0-or-later"

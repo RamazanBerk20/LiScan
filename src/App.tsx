@@ -8,6 +8,7 @@ import {
   getLaunchRequest,
   getScanIssues,
   getSettings,
+  getSystemLanguages,
   getView,
   listVolumes,
   saveSettings,
@@ -27,6 +28,7 @@ import type {
   VolumeInfo
 } from "./types";
 import { findVolumeForTarget } from "./lib/volume";
+import { I18nProvider, resolveLocale, translate } from "./lib/i18n";
 import { Overview } from "./components/Overview";
 import { ScanWorkspace } from "./components/ScanWorkspace";
 import {
@@ -45,6 +47,7 @@ interface ToastState {
 }
 
 const FALLBACK_SETTINGS: Settings = {
+  language: "system",
   theme: "system",
   colorScheme: "system",
   byteUnitScale: "binary",
@@ -73,6 +76,7 @@ export function App() {
   const [volumes, setVolumes] = useState<VolumeInfo[]>([]);
   const [volumesLoading, setVolumesLoading] = useState(true);
   const [homePath, setHomePath] = useState("/");
+  const [systemLanguages, setSystemLanguages] = useState<string[]>();
 
   const [request, setRequest] = useState<ScanRequest | null>(null);
   const [scanId, setScanId] = useState<string | null>(null);
@@ -93,6 +97,9 @@ export function App() {
   const [coverageOpen, setCoverageOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const systemLocale = resolveLocale("system", systemLanguages);
+  const locale = resolveLocale(settings.language, systemLanguages);
+  const localeRef = useRef(locale);
   const launchHandled = useRef(false);
   const scanIdRef = useRef<string | null>(null);
   const currentNodeRef = useRef<number | null>(null);
@@ -110,6 +117,10 @@ export function App() {
   useEffect(() => {
     settingsRef.current = settings;
   }, [settings]);
+
+  useEffect(() => {
+    localeRef.current = locale;
+  }, [locale]);
 
   useEffect(() => {
     currentNodeRef.current = view?.id ?? null;
@@ -206,7 +217,10 @@ export function App() {
               setIssues(fullIssues);
             } catch {
               if (event.event !== "cancelled") {
-                notify("The scan finished, but its map could not be loaded", "error");
+                notify(
+                  translate(localeRef.current, "mapLoadFailed"),
+                  "error"
+                );
               }
             }
           }
@@ -215,7 +229,10 @@ export function App() {
         }
         case "failed":
           setStatus("failed");
-          notify(event.message || "The scan failed", "error");
+          notify(
+            event.message || translate(localeRef.current, "scanFailed"),
+            "error"
+          );
           break;
       }
     },
@@ -262,9 +279,25 @@ export function App() {
 
   useEffect(() => {
     let active = true;
-    Promise.all([getSettings(), listVolumes(), getHomePath()])
-      .then(async ([loadedSettings, loadedVolumes, loadedHome]) => {
+    Promise.all([
+      getSettings(),
+      listVolumes(),
+      getHomePath(),
+      getSystemLanguages()
+    ])
+      .then(
+        async ([
+          loadedSettings,
+          loadedVolumes,
+          loadedHome,
+          loadedSystemLanguages
+        ]) => {
         if (!active) return;
+        setSystemLanguages(loadedSystemLanguages);
+        localeRef.current = resolveLocale(
+          loadedSettings.language,
+          loadedSystemLanguages
+        );
         settingsRef.current = loadedSettings;
         setSettings(loadedSettings);
         setSettingsReady(true);
@@ -282,12 +315,18 @@ export function App() {
             );
           }
         }
-      })
+        }
+      )
       .catch((error) => {
         if (!active) return;
         setSettingsReady(true);
         setVolumesLoading(false);
-        notify(`Some system information could not be loaded: ${error}`, "error");
+        notify(
+          translate(localeRef.current, "systemInformationFailed", {
+            error: String(error)
+          }),
+          "error"
+        );
       });
     return () => {
       active = false;
@@ -371,23 +410,24 @@ export function App() {
   const appReady = settingsReady;
 
   return (
-    <div
-      className={`app-root ${appReady ? "app-root--ready" : ""}`}
-      onDragOver={(event) => event.preventDefault()}
-      onDrop={(event) => {
-        event.preventDefault();
-        const path =
-          event.dataTransfer.getData("text/uri-list") ||
-          event.dataTransfer.getData("text/plain");
-        if (path) {
-          const normalized = path
-            .split("\n")[0]
-            .trim()
-            .replace(/^file:\/\//, "");
-          if (normalized) void startScan(decodeURIComponent(normalized));
-        }
-      }}
-    >
+    <I18nProvider locale={locale}>
+      <div
+        className={`app-root ${appReady ? "app-root--ready" : ""}`}
+        onDragOver={(event) => event.preventDefault()}
+        onDrop={(event) => {
+          event.preventDefault();
+          const path =
+            event.dataTransfer.getData("text/uri-list") ||
+            event.dataTransfer.getData("text/plain");
+          if (path) {
+            const normalized = path
+              .split("\n")[0]
+              .trim()
+              .replace(/^file:\/\//, "");
+            if (normalized) void startScan(decodeURIComponent(normalized));
+          }
+        }}
+      >
       {screen === "overview" ? (
         <Overview
           volumes={volumes}
@@ -470,10 +510,16 @@ export function App() {
         open={settingsOpen}
         onOpenChange={setSettingsOpen}
         settings={settings}
+        systemLocale={systemLocale}
         onSave={(next) => {
           setSettings(next);
           void saveSettings(next).catch((error) =>
-            notify(`Settings could not be saved: ${error}`, "error")
+            notify(
+              translate(localeRef.current, "settingsSaveFailed", {
+                error: String(error)
+              }),
+              "error"
+            )
           );
         }}
       />
@@ -497,12 +543,13 @@ export function App() {
           <button
             className="icon-button"
             onClick={() => setToast(null)}
-            aria-label="Dismiss"
+            aria-label={translate(locale, "dismiss")}
           >
             <X size={16} />
           </button>
         </div>
       )}
-    </div>
+      </div>
+    </I18nProvider>
   );
 }

@@ -31,6 +31,10 @@ actions, remote-location support through GIO, and a narrowly scoped
   display sizes with either IEC binary units (`KiB`, `MiB`, `GiB`, base 1024)
   or SI decimal units (`kB`, `MB`, `GB`, base 1000), and respect reduced-motion
   settings.
+- Follow the system language by default or choose English, Turkish, Spanish,
+  Italian, French, German, Russian, Arabic, Simplified Chinese, Japanese, or
+  Korean. Numbers use the selected locale and Arabic uses a right-to-left
+  layout.
 - Start scans from a directory association, command line, drag-and-drop, or
   KDE file-manager context menu.
 

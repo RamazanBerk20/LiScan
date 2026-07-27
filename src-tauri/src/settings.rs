@@ -34,7 +34,7 @@ pub fn save_settings(settings: &Settings) -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::model::{ByteUnitScale, ThemePreference};
+    use crate::model::{ByteUnitScale, LanguagePreference, ThemePreference};
 
     #[test]
     fn older_settings_default_to_binary_units_without_losing_preferences() {
@@ -56,6 +56,7 @@ mod tests {
         .unwrap();
 
         assert_eq!(settings.byte_unit_scale, ByteUnitScale::Binary);
+        assert_eq!(settings.language, LanguagePreference::System);
         assert!(matches!(settings.theme, ThemePreference::Dark));
         assert_eq!(settings.contrast, 84);
         assert!(!settings.show_sidebar);
@@ -65,5 +66,11 @@ mod tests {
     fn decimal_unit_preference_deserializes() {
         let settings: Settings = serde_json::from_str(r#"{"byteUnitScale":"decimal"}"#).unwrap();
         assert_eq!(settings.byte_unit_scale, ByteUnitScale::Decimal);
+    }
+
+    #[test]
+    fn language_preference_deserializes() {
+        let settings: Settings = serde_json::from_str(r#"{"language":"tr"}"#).unwrap();
+        assert_eq!(settings.language, LanguagePreference::Tr);
     }
 }

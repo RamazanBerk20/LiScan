@@ -18,6 +18,19 @@ export type NodeKind =
 export type ColorScheme = "system" | "rainbow" | "high_contrast";
 export type ThemePreference = "system" | "light" | "dark";
 export type ByteUnitScale = "binary" | "decimal";
+export type AppLocale =
+  | "en"
+  | "tr"
+  | "es"
+  | "it"
+  | "fr"
+  | "de"
+  | "ru"
+  | "ar"
+  | "zh"
+  | "ja"
+  | "ko";
+export type LanguagePreference = "system" | AppLocale;
 
 export interface ScanOptions {
   crossFilesystems: boolean;
@@ -110,6 +123,7 @@ export interface VolumeInfo {
 }
 
 export interface Settings {
+  language: LanguagePreference;
   theme: ThemePreference;
   colorScheme: ColorScheme;
   byteUnitScale: ByteUnitScale;

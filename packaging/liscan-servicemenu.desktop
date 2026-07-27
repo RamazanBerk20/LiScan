@@ -1,5 +1,15 @@
 [Desktop Entry]
 Name=LiScan directory actions
+Name[tr]=LiScan dizin eylemleri
+Name[es]=Acciones de directorio de LiScan
+Name[it]=Azioni cartella di LiScan
+Name[fr]=Actions de dossier LiScan
+Name[de]=LiScan-Ordneraktionen
+Name[ru]=Действия LiScan с папками
+Name[ar]=إجراءات مجلدات LiScan
+Name[zh_CN]=LiScan 文件夹操作
+Name[ja]=LiScan フォルダー操作
+Name[ko]=LiScan 폴더 작업
 Type=Service
 MimeType=inode/directory;
 Actions=LiScan;LiScanAdmin;
@@ -8,10 +18,30 @@ X-KDE-Priority=TopLevel
 
 [Desktop Action LiScan]
 Name=Scan with LiScan
+Name[tr]=LiScan ile tara
+Name[es]=Analizar con LiScan
+Name[it]=Scansiona con LiScan
+Name[fr]=Analyser avec LiScan
+Name[de]=Mit LiScan scannen
+Name[ru]=Сканировать с помощью LiScan
+Name[ar]=الفحص باستخدام LiScan
+Name[zh_CN]=使用 LiScan 扫描
+Name[ja]=LiScan でスキャン
+Name[ko]=LiScan으로 스캔
 Icon=io.github.liscan.LiScan
 Exec=liscan %f
 
 [Desktop Action LiScanAdmin]
 Name=Scan with LiScan as Administrator
+Name[tr]=LiScan ile yönetici olarak tara
+Name[es]=Analizar con LiScan como administrador
+Name[it]=Scansiona con LiScan come amministratore
+Name[fr]=Analyser avec LiScan en tant qu’administrateur
+Name[de]=Mit LiScan als Administrator scannen
+Name[ru]=Сканировать с LiScan от имени администратора
+Name[ar]=الفحص باستخدام LiScan كمسؤول
+Name[zh_CN]=使用 LiScan 以管理员身份扫描
+Name[ja]=LiScan で管理者としてスキャン
+Name[ko]=LiScan으로 관리자 스캔
 Icon=security-high
 Exec=liscan --admin %f

@@ -19,6 +19,7 @@ pub fn run() {
             commands::update_settings,
             commands::list_volumes,
             commands::get_home_path,
+            commands::get_system_languages,
             commands::start_scan,
             commands::cancel_scan,
             commands::get_view,

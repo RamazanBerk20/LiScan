@@ -8,7 +8,27 @@
 
   <action id="io.github.liscan.LiScan.scan-as-administrator">
     <description>Scan protected files with LiScan</description>
+    <description xml:lang="tr">Korunan dosyaları LiScan ile tara</description>
+    <description xml:lang="es">Analizar archivos protegidos con LiScan</description>
+    <description xml:lang="it">Scansiona i file protetti con LiScan</description>
+    <description xml:lang="fr">Analyser les fichiers protégés avec LiScan</description>
+    <description xml:lang="de">Geschützte Dateien mit LiScan scannen</description>
+    <description xml:lang="ru">Сканировать защищённые файлы с помощью LiScan</description>
+    <description xml:lang="ar">فحص الملفات المحمية باستخدام LiScan</description>
+    <description xml:lang="zh-CN">使用 LiScan 扫描受保护的文件</description>
+    <description xml:lang="ja">LiScan で保護されたファイルをスキャン</description>
+    <description xml:lang="ko">LiScan으로 보호된 파일 스캔</description>
     <message>Authentication is required to scan protected file metadata</message>
+    <message xml:lang="tr">Korunan dosya meta verilerini taramak için kimlik doğrulaması gerekiyor</message>
+    <message xml:lang="es">Se requiere autenticación para analizar los metadatos de archivos protegidos</message>
+    <message xml:lang="it">È richiesta l’autenticazione per scansionare i metadati dei file protetti</message>
+    <message xml:lang="fr">Une authentification est requise pour analyser les métadonnées des fichiers protégés</message>
+    <message xml:lang="de">Zum Scannen geschützter Dateimetadaten ist eine Authentifizierung erforderlich</message>
+    <message xml:lang="ru">Для сканирования метаданных защищённых файлов требуется аутентификация</message>
+    <message xml:lang="ar">المصادقة مطلوبة لفحص البيانات الوصفية للملفات المحمية</message>
+    <message xml:lang="zh-CN">扫描受保护文件的元数据需要身份验证</message>
+    <message xml:lang="ja">保護されたファイルのメタデータをスキャンするには認証が必要です</message>
+    <message xml:lang="ko">보호된 파일 메타데이터를 스캔하려면 인증이 필요합니다</message>
     <icon_name>io.github.liscan.LiScan</icon_name>
     <defaults>
       <allow_any>no</allow_any>

@@ -306,6 +306,24 @@ pub enum ThemePreference {
     Dark,
 }
 
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum LanguagePreference {
+    #[default]
+    System,
+    En,
+    Tr,
+    Es,
+    It,
+    Fr,
+    De,
+    Ru,
+    Ar,
+    Zh,
+    Ja,
+    Ko,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ColorScheme {
@@ -325,6 +343,7 @@ pub enum ByteUnitScale {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
+    pub language: LanguagePreference,
     pub theme: ThemePreference,
     pub color_scheme: ColorScheme,
     pub byte_unit_scale: ByteUnitScale,
@@ -336,6 +355,7 @@ pub struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            language: LanguagePreference::System,
             theme: ThemePreference::System,
             color_scheme: ColorScheme::System,
             byte_unit_scale: ByteUnitScale::Binary,

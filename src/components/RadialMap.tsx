@@ -12,6 +12,7 @@ import {
 } from "react";
 import type { ByteUnitScale, ColorScheme, ViewNode } from "../types";
 import { formatBytes } from "../lib/format";
+import { useI18n } from "../lib/i18n";
 
 interface RadialMapProps {
   root: ViewNode;
@@ -110,6 +111,7 @@ export function RadialMap({
   onSelect,
   onCenter
 }: RadialMapProps) {
+  const { locale, t } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const arcsRef = useRef<HitArc[]>([]);
@@ -201,7 +203,10 @@ export function RadialMap({
       const arcLength = angle * middleRadius;
       if (arcLength > 56 && outer - inner > 24) {
         const centerAngle = (start + end) / 2;
-        const label = node.data.name;
+        const label =
+          node.data.kind === "small_files"
+            ? t("nodeSmallFiles")
+            : node.data.name;
         const maxWidth = Math.max(30, arcLength - 16);
         context.save();
         context.rotate(centerAngle);
@@ -244,10 +249,24 @@ export function RadialMap({
     context.fillText(centerName, 0, -7);
     context.fillStyle = muted;
     context.font = "500 10px system-ui, sans-serif";
-    context.fillText(formatBytes(root.allocatedBytes, byteUnitScale), 0, 11);
+    context.fillText(
+      formatBytes(root.allocatedBytes, byteUnitScale, locale),
+      0,
+      11
+    );
     context.restore();
     arcsRef.current = hitArcs;
-  }, [byteUnitScale, contrast, layout, root, scheme, selectedId, size]);
+  }, [
+    byteUnitScale,
+    contrast,
+    layout,
+    locale,
+    root,
+    scheme,
+    selectedId,
+    size,
+    t
+  ]);
 
   useEffect(() => {
     paint();
@@ -280,7 +299,7 @@ export function RadialMap({
     <div className="radial-map" ref={wrapRef}>
       <canvas
         ref={canvasRef}
-        aria-label={`Disk usage map for ${root.displayPath}`}
+        aria-label={t("diskMapAria", { path: root.displayPath })}
         role="img"
         onPointerMove={(event) => {
           const node = hitTest(event);
@@ -315,11 +334,19 @@ export function RadialMap({
             top: Math.min(hovered.y + 14, window.innerHeight - 110)
           }}
         >
-          <strong>{hovered.node.name}</strong>
+          <strong>
+            {hovered.node.kind === "small_files"
+              ? t("nodeSmallFiles")
+              : hovered.node.name}
+          </strong>
           <span>
-            {formatBytes(hovered.node.allocatedBytes, byteUnitScale)}
+            {formatBytes(
+              hovered.node.allocatedBytes,
+              byteUnitScale,
+              locale
+            )}
           </span>
-          <small>{hovered.node.displayPath}</small>
+          <small dir="auto">{hovered.node.displayPath}</small>
         </div>
       )}
     </div>

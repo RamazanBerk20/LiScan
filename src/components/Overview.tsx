@@ -10,6 +10,7 @@ import {
 import type { ByteUnitScale, VolumeInfo } from "../types";
 import { formatBytes, formatPercentage } from "../lib/format";
 import { getVolumeCapacity } from "../lib/volume";
+import { useI18n } from "../lib/i18n";
 import { LiScanMark } from "./Brand";
 
 interface OverviewProps {
@@ -37,35 +38,34 @@ export function Overview({
   onSettings,
   onAbout
 }: OverviewProps) {
+  const { locale, t } = useI18n();
+
   return (
     <div className="overview-shell">
       <header className="overview-nav">
         <LiScanMark />
         <div className="overview-nav__actions">
           <button className="button button--quiet" onClick={onAbout}>
-            About
+            {t("about")}
           </button>
           <button className="button button--quiet" onClick={onSettings}>
-            Settings
+            {t("settings")}
           </button>
         </div>
       </header>
 
       <main className="overview">
         <section className="overview-intro">
-          <p className="overview-kicker">Disk usage, made clear</p>
-          <h1>See where your disk space went.</h1>
-          <p>
-            Scan any Linux folder, inspect every level, and clean up with
-            confidence.
-          </p>
+          <p className="overview-kicker">{t("overviewKicker")}</p>
+          <h1>{t("overviewTitle")}</h1>
+          <p>{t("overviewDescription")}</p>
         </section>
 
         <section className="launch-panel" aria-labelledby="start-scan-heading">
           <div className="launch-panel__heading">
             <div>
-              <h2 id="start-scan-heading">Start a scan</h2>
-              <p>Choose a common location or browse to any folder.</p>
+              <h2 id="start-scan-heading">{t("startScan")}</h2>
+              <p>{t("startScanDescription")}</p>
             </div>
             <ShieldCheck size={25} weight="duotone" aria-hidden="true" />
           </div>
@@ -76,8 +76,8 @@ export function Overview({
                 <House size={22} weight="duotone" />
               </span>
               <span>
-                <strong>Home folder</strong>
-                <small>{homePath}</small>
+                <strong>{t("homeFolder")}</strong>
+                <small dir="auto">{homePath}</small>
               </span>
               <ArrowRight size={18} />
             </button>
@@ -86,7 +86,7 @@ export function Overview({
                 <HardDrive size={22} weight="duotone" />
               </span>
               <span>
-                <strong>Root filesystem</strong>
+                <strong>{t("rootFilesystem")}</strong>
                 <small>/</small>
               </span>
               <ArrowRight size={18} />
@@ -96,8 +96,8 @@ export function Overview({
                 <Folder size={22} weight="duotone" />
               </span>
               <span>
-                <strong>Choose folder</strong>
-                <small>Local or removable storage</small>
+                <strong>{t("chooseFolder")}</strong>
+                <small>{t("localOrRemovable")}</small>
               </span>
               <ArrowRight size={18} />
             </button>
@@ -106,8 +106,8 @@ export function Overview({
                 <LinkSimple size={22} weight="duotone" />
               </span>
               <span>
-                <strong>Remote location</strong>
-                <small>SFTP, SMB, or another GIO location</small>
+                <strong>{t("remoteLocation")}</strong>
+                <small>{t("remoteLocationDescription")}</small>
               </span>
               <ArrowRight size={18} />
             </button>
@@ -118,14 +118,11 @@ export function Overview({
               <LockKey size={24} weight="duotone" />
             </span>
             <div>
-              <strong>Need complete access?</strong>
-              <p>
-                Authenticate once to include protected folders. LiScan itself
-                stays unprivileged.
-              </p>
+              <strong>{t("needCompleteAccess")}</strong>
+              <p>{t("administratorDescription")}</p>
             </div>
             <button className="button button--primary" onClick={onAdmin}>
-              Scan as administrator
+              {t("scanAsAdministrator")}
             </button>
           </div>
         </section>
@@ -133,26 +130,33 @@ export function Overview({
         <section className="volumes-section" aria-labelledby="storage-heading">
           <div className="section-heading">
             <div>
-              <h2 id="storage-heading">Storage</h2>
-              <p>Mounted filesystems available to scan.</p>
+              <h2 id="storage-heading">{t("storage")}</h2>
+              <p>{t("storageDescription")}</p>
             </div>
           </div>
 
           {volumesLoading ? (
-            <div className="volume-skeletons" aria-label="Loading storage">
+            <div
+              className="volume-skeletons"
+              aria-label={t("loadingStorage")}
+            >
               <div className="skeleton skeleton--volume" />
               <div className="skeleton skeleton--volume" />
             </div>
           ) : volumes.length === 0 ? (
-            <div className="empty-inline">
-              No mounted storage could be detected. You can still choose a
-              folder above.
-            </div>
+            <div className="empty-inline">{t("noStorage")}</div>
           ) : (
             <div className="volume-list">
               {volumes.map((volume) => {
                 const capacity = getVolumeCapacity(volume);
-                const percentage = formatPercentage(capacity.usedPercent);
+                const percentage = formatPercentage(
+                  capacity.usedPercent,
+                  locale
+                );
+                const volumeName =
+                  volume.mountPoint === "/" && volume.name === "System"
+                    ? t("systemFilesystem")
+                    : volume.name || volume.mountPoint;
                 return (
                   <button
                     className="volume-row"
@@ -163,22 +167,28 @@ export function Overview({
                       <HardDrive size={21} weight="duotone" />
                     </span>
                     <span className="volume-row__identity">
-                      <strong>{volume.name || volume.mountPoint}</strong>
-                      <small>
-                        {volume.mountPoint} · {volume.fileSystem || "filesystem"}
+                      <strong>{volumeName}</strong>
+                      <small dir="auto">
+                        {volume.mountPoint} ·{" "}
+                        {volume.fileSystem || t("filesystem")}
                       </small>
                     </span>
                     <span className="volume-row__usage">
                       <span className="volume-row__usage-head">
                         <span>
-                          {formatBytes(capacity.usedBytes, byteUnitScale)} used
+                          {formatBytes(
+                            capacity.usedBytes,
+                            byteUnitScale,
+                            locale
+                          )}{" "}
+                          {t("used").toLocaleLowerCase(locale)}
                         </span>
                         <strong>{percentage}</strong>
                       </span>
                       <span
                         className="meter"
                         role="progressbar"
-                        aria-label={`${percentage} of storage used`}
+                        aria-label={t("storageUsedAria", { percentage })}
                         aria-valuemin={0}
                         aria-valuemax={100}
                         aria-valuenow={Math.round(capacity.usedPercent)}
@@ -187,10 +197,20 @@ export function Overview({
                       </span>
                       <span className="volume-row__usage-foot">
                         <span>
-                          {formatBytes(capacity.freeBytes, byteUnitScale)} free
+                          {formatBytes(
+                            capacity.freeBytes,
+                            byteUnitScale,
+                            locale
+                          )}{" "}
+                          {t("free").toLocaleLowerCase(locale)}
                         </span>
                         <span>
-                          {formatBytes(capacity.totalBytes, byteUnitScale)} total
+                          {formatBytes(
+                            capacity.totalBytes,
+                            byteUnitScale,
+                            locale
+                          )}{" "}
+                          {t("total").toLocaleLowerCase(locale)}
                         </span>
                       </span>
                     </span>
@@ -204,7 +224,7 @@ export function Overview({
       </main>
 
       <footer className="overview-footer">
-        <span>Local by design. No file data leaves your computer.</span>
+        <span>{t("privacyNotice")}</span>
         <span>GPL-3.0-or-later</span>
       </footer>
     </div>

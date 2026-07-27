@@ -14,11 +14,20 @@ const BYTE_UNITS: Record<
   }
 };
 
+function numberLocale(locale?: string): string | undefined {
+  return locale === "ar" ? "ar-u-nu-arab" : locale;
+}
+
 export function formatBytes(
   value: number,
-  scale: ByteUnitScale = "binary"
+  scale: ByteUnitScale = "binary",
+  locale?: string
 ): string {
-  if (!Number.isFinite(value) || value <= 0) return "0 B";
+  if (!Number.isFinite(value) || value <= 0) {
+    return `${new Intl.NumberFormat(numberLocale(locale), {
+      useGrouping: false
+    }).format(0)} B`;
+  }
   const { base, labels } = BYTE_UNITS[scale];
   const index = Math.min(
     Math.floor(Math.log(value) / Math.log(base)),
@@ -26,20 +35,26 @@ export function formatBytes(
   );
   const scaled = value / base ** index;
   const digits = scaled >= 100 || index === 0 ? 0 : scaled >= 10 ? 1 : 2;
-  return `${scaled.toFixed(digits)} ${labels[index]}`;
+  const formatted = new Intl.NumberFormat(numberLocale(locale), {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+    useGrouping: false
+  }).format(scaled);
+  return `${formatted} ${labels[index]}`;
 }
 
-export function formatCount(value: number): string {
-  return new Intl.NumberFormat().format(value);
+export function formatCount(value: number, locale?: string): string {
+  return new Intl.NumberFormat(numberLocale(locale)).format(value);
 }
 
-export function formatPercentage(value: number): string {
+export function formatPercentage(value: number, locale?: string): string {
   const safeValue = Number.isFinite(value)
     ? Math.min(100, Math.max(0, value))
     : 0;
-  return `${new Intl.NumberFormat(undefined, {
+  return new Intl.NumberFormat(numberLocale(locale), {
+    style: "percent",
     maximumFractionDigits: 1
-  }).format(safeValue)}%`;
+  }).format(safeValue / 100);
 }
 
 export function leafName(path: string): string {

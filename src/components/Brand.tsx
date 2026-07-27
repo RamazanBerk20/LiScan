@@ -1,4 +1,5 @@
 import { ShieldCheck } from "@phosphor-icons/react";
+import { useI18n } from "../lib/i18n";
 
 export function LiScanMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -13,10 +14,11 @@ export function LiScanMark({ compact = false }: { compact?: boolean }) {
   );
 }
 export function AdminBadge() {
+  const { t } = useI18n();
   return (
     <span className="admin-badge">
       <ShieldCheck size={14} weight="fill" />
-      Administrator scan
+      {t("administratorScan")}
     </span>
   );
 }
