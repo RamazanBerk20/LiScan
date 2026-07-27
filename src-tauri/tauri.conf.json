@@ -1,0 +1,79 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "LiScan",
+  "version": "0.1.0",
+  "identifier": "io.github.liscan.LiScan",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build && cargo build --manifest-path src-tauri/admin-helper/Cargo.toml --target-dir src-tauri/target --release --locked",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "LiScan",
+        "width": 1180,
+        "height": 760,
+        "minWidth": 720,
+        "minHeight": 520,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "transparent": false
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; img-src 'self' asset: data:; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src ipc: http://ipc.localhost; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'",
+      "capabilities": ["main"]
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["deb", "rpm"],
+    "category": "Utility",
+    "shortDescription": "Understand what uses your disk space",
+    "longDescription": "LiScan visualizes disk usage with an accessible radial map and can safely scan protected locations through a minimal administrator helper.",
+    "copyright": "Copyright 2026 LiScan contributors",
+    "licenseFile": "../LICENSE",
+    "linux": {
+      "appimage": {
+        "bundleMediaFramework": false
+      },
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libgtk-3-0",
+          "libglib2.0-0",
+          "policykit-1"
+        ],
+        "desktopTemplate": "../packaging/io.github.liscan.LiScan.desktop",
+        "files": {
+          "/usr/libexec/liscan/liscan-admin-helper": "target/release/liscan-admin-helper",
+          "/usr/share/icons/hicolor/scalable/apps/io.github.liscan.LiScan.svg": "icons/icon.svg",
+          "/usr/share/kio/servicemenus/liscan.desktop": "../packaging/liscan-servicemenu.desktop",
+          "/usr/share/metainfo/io.github.liscan.LiScan.metainfo.xml": "../packaging/io.github.liscan.LiScan.metainfo.xml",
+          "/usr/share/polkit-1/actions/io.github.liscan.LiScan.policy": "../packaging/io.github.liscan.LiScan.policy"
+        }
+      },
+      "rpm": {
+        "depends": [
+          "webkit2gtk4.1",
+          "gtk3",
+          "glib2",
+          "polkit"
+        ],
+        "desktopTemplate": "../packaging/io.github.liscan.LiScan.desktop",
+        "files": {
+          "/usr/libexec/liscan/liscan-admin-helper": "target/release/liscan-admin-helper",
+          "/usr/share/icons/hicolor/scalable/apps/io.github.liscan.LiScan.svg": "icons/icon.svg",
+          "/usr/share/kio/servicemenus/liscan.desktop": "../packaging/liscan-servicemenu.desktop",
+          "/usr/share/metainfo/io.github.liscan.LiScan.metainfo.xml": "../packaging/io.github.liscan.LiScan.metainfo.xml",
+          "/usr/share/polkit-1/actions/io.github.liscan.LiScan.policy": "../packaging/io.github.liscan.LiScan.policy"
+        }
+      }
+    }
+  }
+}

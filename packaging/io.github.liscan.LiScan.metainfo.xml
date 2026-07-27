@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.liscan.LiScan</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.liscan">
+    <name>LiScan contributors</name>
+  </developer>
+  <name>LiScan</name>
+  <summary>Understand what uses your disk space</summary>
+  <description>
+    <p>
+      LiScan is a clear, local-first disk usage analyzer for Linux. Its radial
+      map and sortable folder list make large files and folders easy to find.
+    </p>
+    <p>
+      Protected locations can be scanned through a narrowly scoped Polkit
+      helper while the interface remains unprivileged. LiScan reports skipped
+      paths and never uploads file information.
+    </p>
+  </description>
+  <launchable type="desktop-id">LiScan.desktop</launchable>
+  <provides>
+    <mediatype>inode/directory</mediatype>
+  </provides>
+  <categories>
+    <category>Utility</category>
+    <category>Filesystem</category>
+  </categories>
+  <keywords>
+    <keyword>disk usage</keyword>
+    <keyword>storage</keyword>
+    <keyword>files</keyword>
+  </keywords>
+  <url type="homepage">https://github.com/RamazanBerk20/LiScan</url>
+  <url type="bugtracker">https://github.com/RamazanBerk20/LiScan/issues</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0" date="2026-07-27">
+      <description>
+        <p>Initial LiScan release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

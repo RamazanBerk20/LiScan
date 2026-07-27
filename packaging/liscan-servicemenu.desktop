@@ -1,0 +1,17 @@
+[Desktop Entry]
+Name=LiScan directory actions
+Type=Service
+MimeType=inode/directory;
+Actions=LiScan;LiScanAdmin;
+X-KDE-ServiceTypes=KonqPopupMenu/Plugin
+X-KDE-Priority=TopLevel
+
+[Desktop Action LiScan]
+Name=Scan with LiScan
+Icon=io.github.liscan.LiScan
+Exec=liscan %f
+
+[Desktop Action LiScanAdmin]
+Name=Scan with LiScan as Administrator
+Icon=security-high
+Exec=liscan --admin %f

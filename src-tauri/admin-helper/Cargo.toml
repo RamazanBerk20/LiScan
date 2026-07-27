@@ -1,0 +1,13 @@
+[package]
+name = "liscan-admin-helper"
+version = "0.1.0"
+description = "Metadata-only administrator scan helper for LiScan"
+authors = ["LiScan contributors"]
+license = "GPL-3.0-or-later"
+edition = "2024"
+rust-version = "1.95"
+publish = false
+
+[dependencies]
+libc = "0.2.175"
+liscan_lib = { package = "liscan", path = ".." }

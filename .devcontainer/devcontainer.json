@@ -1,0 +1,52 @@
+{
+  "name": "LiScan",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/rust:1": {
+      "version": "1.95.0",
+      "profile": "minimal",
+      "components": "rust-analyzer,rust-src,rustfmt,clippy"
+    },
+    "ghcr.io/devcontainers/features/node:2": {
+      "version": "22",
+      "pnpmVersion": "11.3.0"
+    },
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "webPort": "6080",
+      "vncPort": "5901"
+    }
+  },
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "forwardPorts": [
+    6080
+  ],
+  "portsAttributes": {
+    "6080": {
+      "label": "LiScan desktop",
+      "onAutoForward": "notify",
+      "protocol": "http"
+    }
+  },
+  "runArgs": [
+    "--shm-size=1g"
+  ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "bradlc.vscode-tailwindcss",
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml",
+        "vadimcn.vscode-lldb"
+      ],
+      "settings": {
+        "rust-analyzer.check.command": "clippy",
+        "typescript.tsdk": "node_modules/typescript/lib"
+      }
+    }
+  }
+}

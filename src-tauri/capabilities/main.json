@@ -1,0 +1,12 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main",
+  "description": "Minimal permissions for the local LiScan window",
+  "windows": ["main"],
+  "platforms": ["linux"],
+  "permissions": [
+    "core:default",
+    "dialog:allow-open",
+    "clipboard-manager:allow-write-text"
+  ]
+}

@@ -1,0 +1,22 @@
+[Desktop Entry]
+Name=LiScan
+GenericName=Disk Usage Analyzer
+Comment=Understand what uses your disk space
+Exec=liscan %U
+Icon=io.github.liscan.LiScan
+Terminal=false
+Type=Application
+Categories=System;Filesystem;
+Keywords=disk;usage;storage;files;folders;scan;
+MimeType=inode/directory;
+StartupNotify=true
+StartupWMClass=LiScan
+Actions=ScanHome;ScanRoot;
+
+[Desktop Action ScanHome]
+Name=Scan Home Folder
+Exec=liscan --home
+
+[Desktop Action ScanRoot]
+Name=Scan Root Filesystem
+Exec=liscan /

@@ -1,0 +1,1 @@
+{"main":{"identifier":"main","description":"Minimal permissions for the local LiScan window","local":true,"windows":["main"],"permissions":["core:default","dialog:allow-open","clipboard-manager:allow-write-text"],"platforms":["linux"]}}

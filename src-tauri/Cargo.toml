@@ -1,0 +1,36 @@
+[package]
+name = "liscan"
+version = "0.1.0"
+description = "A clear, complete disk usage scanner for Linux"
+authors = ["LiScan contributors"]
+license = "GPL-3.0-or-later"
+repository = "https://github.com/RamazanBerk20/LiScan"
+edition = "2024"
+rust-version = "1.95"
+default-run = "liscan"
+
+[lib]
+name = "liscan_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "liscan"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.6.3", features = [] }
+
+[dependencies]
+ciborium = "0.2.2"
+dirs = "6.0.0"
+gio = "0.22.8"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.143"
+sysinfo = "0.39.6"
+tauri = { version = "2.11.5", features = [] }
+tauri-plugin-clipboard-manager = "2.3.2"
+tauri-plugin-dialog = "2.7.2"
+thiserror = "2.0.19"
+trash = "5.2.6"
+url = "2.5.8"
+uuid = { version = "1.24.0", features = ["v4", "serde"] }

@@ -1,0 +1,13 @@
+node_modules/
+dist/
+target/
+src-tauri/target/
+.vite/
+.idea/
+.vscode/
+*.log
+*.tsbuildinfo
+*.AppImage
+*.deb
+*.rpm
+.DS_Store
