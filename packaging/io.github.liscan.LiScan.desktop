@@ -28,7 +28,6 @@ Terminal=false
 Type=Application
 Categories=System;Filesystem;
 Keywords=disk;usage;storage;files;folders;scan;
-MimeType=inode/directory;
 StartupNotify=true
 StartupWMClass=LiScan
 Actions=ScanHome;ScanRoot;

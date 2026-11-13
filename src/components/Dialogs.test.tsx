@@ -11,6 +11,7 @@ const settings: Settings = {
   byteUnitScale: "binary",
   contrast: 72,
   showSidebar: true,
+  keepHistory: true,
   scanOptions: {
     crossFilesystems: false,
     includeRemoteMounts: false,
@@ -31,6 +32,7 @@ describe("SettingsDialog localization", () => {
           settings={settings}
           systemLocale="en"
           onSave={onSave}
+          onClearHistory={() => undefined}
         />
       </I18nProvider>
     );

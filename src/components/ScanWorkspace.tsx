@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   ArrowRight,
   ArrowUp,
+  Broom,
   CaretRight,
   ChartDonut,
   Check,
@@ -15,6 +16,7 @@ import {
   FolderOpen,
   Gear,
   House,
+  GitDiff,
   Info,
   List,
   LockKey,
@@ -28,40 +30,38 @@ import {
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import type {
+  Lens,
   NodeDetail,
   NodeSummary,
-  ScanIssue,
-  ScanMode,
-  ScanProgress,
-  ScanStatus,
-  ScanSummary,
   Settings,
-  VolumeInfo,
-  ViewNode
+  SnapshotInfo,
+  VolumeInfo
 } from "../types";
 import { getNode, performFileAction } from "../lib/backend";
+import { canStop, isBusy, type Scan } from "../lib/scanMachine";
 import { formatBytes, formatCount } from "../lib/format";
 import { useI18n } from "../lib/i18n";
 import { AdminBadge, LiScanMark } from "./Brand";
-import { DeleteDialog } from "./Dialogs";
-import { RadialMap } from "./RadialMap";
+import { deltaIndex } from "../lib/lens";
+import { GROW_COLOR, RadialMap, SHRINK_COLOR, type MapLens } from "./RadialMap";
+import { ComparePanel, ReclaimPanel, formatDate } from "./LensPanel";
 import { CapacityStrip } from "./CapacityStrip";
 
+/** Compare and Reclaimable views of a finished scan. */
+export interface Analysis {
+  snapshots: SnapshotInfo[];
+  lens: Lens | null;
+  onCompare: (timestamp: number) => void;
+  onToggleReclaim: () => void;
+  onExitLens: () => void;
+}
+
 interface ScanWorkspaceProps {
-  scanId: string | null;
-  target: string;
-  mode: ScanMode;
-  status: ScanStatus;
-  progress: ScanProgress | null;
-  summary: ScanSummary | null;
-  view: ViewNode | null;
-  children: NodeSummary[];
+  analysis?: Analysis;
+  scan: Exclude<Scan, { kind: "idle" }>;
   selectedId: number | null;
   settings: Settings;
   volume: VolumeInfo | null;
-  canGoBack: boolean;
-  canGoForward: boolean;
-  issues: ScanIssue[];
   viewDepth: number;
   onOverview: () => void;
   onCancel: () => void;
@@ -74,6 +74,8 @@ interface ScanWorkspaceProps {
   onSettings: () => void;
   onCoverage: () => void;
   onReload: () => void;
+  onMoreChildren: () => void;
+  onRequestDelete: (node: NodeDetail) => void;
   onViewDepth: (depth: number) => void;
   onNotify: (message: string, tone?: "normal" | "error") => void;
 }
@@ -190,20 +192,11 @@ function ItemMenu({
 }
 
 export function ScanWorkspace({
-  scanId,
-  target,
-  mode,
-  status,
-  progress,
-  summary,
-  view,
-  children,
+  analysis,
+  scan,
   selectedId,
   settings,
   volume,
-  canGoBack,
-  canGoForward,
-  issues,
   viewDepth,
   onOverview,
   onCancel,
@@ -216,18 +209,43 @@ export function ScanWorkspace({
   onSettings,
   onCoverage,
   onReload,
+  onMoreChildren,
+  onRequestDelete,
   onViewDepth,
   onNotify
 }: ScanWorkspaceProps) {
   const { locale, t } = useI18n();
   const [selected, setSelected] = useState<NodeDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [visibleRows, setVisibleRows] = useState(240);
-
-  useEffect(() => {
-    setVisibleRows(240);
-  }, [view?.id]);
+  const ready = scan.kind === "ready" ? scan : null;
+  // View, children and the scan id always come from the same ready state.
+  const scanId = ready?.scanId ?? null;
+  const view = ready?.view ?? null;
+  const children = ready?.children ?? { items: [], total: 0 };
+  const summary =
+    scan.kind === "ready" || scan.kind === "loading" ? scan.summary : null;
+  const progress =
+    scan.kind === "scanning" || scan.kind === "cancelling" ? scan.progress : null;
+  const target = scan.request.target;
+  const mode = scan.request.mode;
+  const issueCount = summary
+    ? summary.issues + summary.excluded
+    : scan.kind === "scanning" || scan.kind === "cancelling"
+      ? scan.liveIssues.length
+      : 0;
+  const lens = analysis?.lens ?? null;
+  const mapLens = useMemo<MapLens | null>(() => {
+    if (lens?.kind === "compare") return { kind: "compare", ...deltaIndex(lens.diff.rows) };
+    if (lens?.kind === "reclaim") {
+      return { kind: "reclaim", paths: lens.data.matches.map((match) => match.path) };
+    }
+    return null;
+  }, [lens]);
+  const canGoBack = (ready?.nav.index ?? 0) > 0;
+  const canGoForward =
+    ready != null &&
+    ready.nav.index >= 0 &&
+    ready.nav.index < ready.nav.history.length - 1;
 
   useEffect(() => {
     if (!scanId || selectedId == null || selectedId > Number.MAX_SAFE_INTEGER) {
@@ -251,16 +269,20 @@ export function ScanWorkspace({
     };
   }, [scanId, selectedId]);
 
-  const running = status === "scanning" || status === "authorizing";
-  const visibleChildren = useMemo(
-    () => children.slice(0, visibleRows),
-    [children, visibleRows]
-  );
+  const running = isBusy(scan);
+  const stoppable = canStop(scan);
+  const partial = ready?.partial ?? (scan.kind === "loading" && scan.partial);
+  const status =
+    scan.kind === "ready" || scan.kind === "loading"
+      ? partial
+        ? "cancelled"
+        : (summary?.status ?? "complete")
+      : scan.kind;
 
   async function runAction(action: string, node = selected) {
     if (!scanId || !node) return;
     if (action === "request_delete") {
-      setDeleteOpen(true);
+      onRequestDelete(node);
       return;
     }
     try {
@@ -278,18 +300,60 @@ export function ScanWorkspace({
     }
   }
 
-  const statusLabel =
-    status === "authorizing"
-      ? t("statusWaitingAuthentication")
-      : status === "scanning"
-        ? t("statusScanning")
-        : status === "complete_with_issues"
-          ? t("statusCompletedWithIssues")
-          : status === "cancelled"
-            ? t("statusPartialScan")
-            : status === "failed"
-              ? t("statusScanFailed")
-              : t("statusScanComplete");
+  const statusLabel = {
+    authorizing: t("statusWaitingAuthentication"),
+    scanning: t("statusScanning"),
+    cancelling: t("statusCancelling"),
+    loading: t("preparingMap"),
+    complete_with_issues: t("statusCompletedWithIssues"),
+    cancelled: t("statusPartialScan"),
+    failed: t("statusScanFailed"),
+    complete: t("statusScanComplete"),
+    idle: t("statusScanComplete")
+  }[status];
+
+  const progressScreen = (heading: string, prompt?: string) => (
+    <main className="scanning-state">
+      <div className="scanning-visual" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      <h1>{heading}</h1>
+      {prompt && <p>{prompt}</p>}
+      <p className="scanning-path" dir="auto">
+        {progress?.currentPath || target}
+      </p>
+      <div className="scanning-stats">
+        <div>
+          <strong>
+            {formatCount(progress?.directoriesScanned ?? 0, locale)}
+          </strong>
+          <span>{t("folders")}</span>
+        </div>
+        <div>
+          <strong>{formatCount(progress?.filesScanned ?? 0, locale)}</strong>
+          <span>{t("files")}</span>
+        </div>
+        <div>
+          <strong>
+            {formatBytes(
+              progress?.bytesScanned ?? 0,
+              settings.byteUnitScale,
+              locale
+            )}
+          </strong>
+          <span>{t("counted")}</span>
+        </div>
+      </div>
+      {stoppable && (
+        <button className="button button--quiet-border" onClick={onCancel}>
+          <X size={16} />
+          {t("cancelScan")}
+        </button>
+      )}
+    </main>
+  );
 
   return (
     <div
@@ -333,8 +397,64 @@ export function ScanWorkspace({
           <span>{view?.displayPath ?? target}</span>
         </div>
         <div className="workspace-tools">
+          {analysis && ready && view && scanId && (
+            <>
+              {analysis.snapshots.length > 0 && (
+                <DropdownMenu.Root dir={locale === "ar" ? "rtl" : "ltr"}>
+                  <DropdownMenu.Trigger asChild>
+                    <button
+                      className={`button button--quiet-border lens-button ${
+                        lens?.kind === "compare" ? "lens-button--active" : ""
+                      }`}
+                      aria-label={t("compareWithEarlier")}
+                    >
+                      <GitDiff size={16} />
+                      {t("compare")}
+                    </button>
+                  </DropdownMenu.Trigger>
+                  <DropdownMenu.Portal>
+                    <DropdownMenu.Content
+                      className="menu-content"
+                      sideOffset={4}
+                      align="end"
+                    >
+                      <DropdownMenu.Label className="menu-label">
+                        {t("compareWithEarlier")}
+                      </DropdownMenu.Label>
+                      {analysis.snapshots.map((snapshot) => (
+                        <DropdownMenu.Item
+                          key={snapshot.timestamp}
+                          className="menu-item menu-item--split"
+                          onSelect={() => analysis.onCompare(snapshot.timestamp)}
+                        >
+                          <span>{formatDate(snapshot.timestamp, locale)}</span>
+                          <small>
+                            {formatBytes(snapshot.total, settings.byteUnitScale, locale)}
+                          </small>
+                        </DropdownMenu.Item>
+                      ))}
+                    </DropdownMenu.Content>
+                  </DropdownMenu.Portal>
+                </DropdownMenu.Root>
+              )}
+              <button
+                className={`button button--quiet-border lens-button ${
+                  lens?.kind === "reclaim" ? "lens-button--active" : ""
+                }`}
+                aria-pressed={lens?.kind === "reclaim"}
+                onClick={analysis.onToggleReclaim}
+              >
+                <Broom size={16} />
+                {t("reclaimable")}
+              </button>
+            </>
+          )}
           {running ? (
-            <button className="button button--stop" onClick={onCancel}>
+            <button
+              className="button button--stop"
+              onClick={onCancel}
+              disabled={!stoppable}
+            >
               <Stop size={16} weight="fill" />
               {t("stop")}
             </button>
@@ -399,7 +519,7 @@ export function ScanWorkspace({
                 </span>
               </>
             )}
-            {summary && !running && (
+            {summary && (
               <>
                 <span>
                   {t("filesCount", {
@@ -432,7 +552,7 @@ export function ScanWorkspace({
                 <>
                   <Info size={14} /> {t("partialCoverage")}
                 </>
-              ) : issues.length === 0 ? (
+              ) : issueCount === 0 ? (
                 <>
                   <Check size={14} /> {t("fullCoverage")}
                 </>
@@ -440,7 +560,7 @@ export function ScanWorkspace({
                 <>
                   <Info size={14} />{" "}
                   {t("reportsCount", {
-                    count: formatCount(issues.length, locale)
+                    count: formatCount(issueCount, locale)
                   })}
                 </>
               )}
@@ -460,54 +580,18 @@ export function ScanWorkspace({
         )}
       </div>
 
-      {running && !view ? (
-        <main className="scanning-state">
-          <div className="scanning-visual" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
-          <h1>
-            {status === "authorizing"
-              ? t("authenticationRequired")
-              : t("readingFolders")}
-          </h1>
-          <p className="scanning-path" dir="auto">
-            {progress?.currentPath || target}
-          </p>
-          <div className="scanning-stats">
-            <div>
-              <strong>
-                {formatCount(progress?.directoriesScanned ?? 0, locale)}
-              </strong>
-              <span>{t("folders")}</span>
-            </div>
-            <div>
-              <strong>
-                {formatCount(progress?.filesScanned ?? 0, locale)}
-              </strong>
-              <span>{t("files")}</span>
-            </div>
-            <div>
-              <strong>
-                {formatBytes(
-                  progress?.bytesScanned ?? 0,
-                  settings.byteUnitScale,
-                  locale
-                )}
-              </strong>
-              <span>{t("counted")}</span>
-            </div>
-          </div>
-          <button className="button button--quiet-border" onClick={onCancel}>
-            <X size={16} />
-            {t("cancelScan")}
-          </button>
-        </main>
+      {scan.kind === "authorizing" ? (
+        progressScreen(t("authenticationRequired"), t("authenticationPrompt"))
+      ) : scan.kind === "scanning" ? (
+        progressScreen(t("readingFolders"))
+      ) : scan.kind === "cancelling" ? (
+        progressScreen(t("statusCancelling"))
+      ) : scan.kind === "loading" ? (
+        progressScreen(t("preparingMap"))
       ) : view ? (
         <main
           className={`scan-layout ${settings.showSidebar ? "" : "scan-layout--map-only"} ${
-            selected ? "scan-layout--details" : ""
+            selected || lens ? "scan-layout--details" : ""
           }`}
         >
           {settings.showSidebar && (
@@ -522,19 +606,19 @@ export function ScanWorkspace({
                 </div>
                 <span>
                   {t("itemsCount", {
-                    count: formatCount(children.length, locale)
+                    count: formatCount(children.total, locale)
                   })}
                 </span>
               </div>
               <div className="file-list" role="tree">
-                {visibleChildren.length === 0 ? (
+                {children.items.length === 0 ? (
                   <div className="empty-list">
                     <Folder size={27} weight="duotone" />
                     <strong>{t("noFilesShown")}</strong>
                     <span>{t("emptyOrExcluded")}</span>
                   </div>
                 ) : (
-                  visibleChildren.map((node) => (
+                  children.items.map((node) => (
                     <div
                       className={`file-row ${
                         selectedId === node.id ? "file-row--selected" : ""
@@ -599,7 +683,7 @@ export function ScanWorkspace({
                             if (action === "request_delete") {
                               const detail = await getNode(scanId, node.id);
                               setSelected(detail);
-                              setDeleteOpen(true);
+                              onRequestDelete(detail);
                             } else {
                               const output = await performFileAction(
                                 scanId,
@@ -625,14 +709,11 @@ export function ScanWorkspace({
                     </div>
                   ))
                 )}
-                {children.length > visibleRows && (
-                  <button
-                    className="load-more"
-                    onClick={() => setVisibleRows((count) => count + 240)}
-                  >
+                {children.items.length < children.total && (
+                  <button className="load-more" onClick={onMoreChildren}>
                     {t("showMore", {
                       count: formatCount(
-                        Math.min(240, children.length - visibleRows),
+                        Math.min(240, children.total - children.items.length),
                         locale
                       )
                     })}
@@ -645,6 +726,7 @@ export function ScanWorkspace({
           <section className="map-panel">
             <RadialMap
               root={view}
+              lens={mapLens}
               scheme={settings.colorScheme}
               contrast={settings.contrast}
               byteUnitScale={settings.byteUnitScale}
@@ -653,17 +735,66 @@ export function ScanWorkspace({
               onCenter={onCenter}
             />
             <div className="map-legend">
-              <span>
-                <i className="legend-folder" /> {t("mapFolders")}
-              </span>
-              <span>
-                <i className="legend-file" /> {t("mapFilesGrouped")}
-              </span>
-              <small>{t("centerMapHint")}</small>
+              {lens?.kind === "compare" ? (
+                <>
+                  <span>
+                    <i style={{ background: GROW_COLOR }} /> + {t("cmpGrew")}
+                  </span>
+                  <span>
+                    <i style={{ background: SHRINK_COLOR }} /> − {t("cmpShrank")}
+                  </span>
+                  <span>
+                    <i className="legend-neutral" /> {t("cmpUnchanged")}
+                  </span>
+                  <button
+                    className="legend-exit"
+                    onClick={analysis?.onExitLens}
+                  >
+                    {t("leaveComparison")}
+                  </button>
+                </>
+              ) : lens?.kind === "reclaim" ? (
+                <>
+                  <span>
+                    <i className="legend-folder" /> {t("reclaimable")}
+                  </span>
+                  <span>
+                    <i className="legend-neutral" /> {t("reclaimOther")}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span>
+                    <i className="legend-folder" /> {t("mapFolders")}
+                  </span>
+                  <span>
+                    <i className="legend-file" /> {t("mapFilesGrouped")}
+                  </span>
+                  <small>{t("centerMapHint")}</small>
+                </>
+              )}
             </div>
           </section>
 
-          {selected && (
+          {analysis && lens?.kind === "compare" && (
+            <ComparePanel
+              diff={lens.diff}
+              scale={settings.byteUnitScale}
+              onShow={(nodeId) => onCenter({ id: nodeId, kind: "directory" })}
+              onExit={analysis.onExitLens}
+            />
+          )}
+          {analysis && lens?.kind === "reclaim" && (
+            <ReclaimPanel
+              data={lens.data}
+              scale={settings.byteUnitScale}
+              onShow={(nodeId) => onCenter({ id: nodeId, kind: "directory" })}
+              onExit={analysis.onExitLens}
+              onNotify={onNotify}
+            />
+          )}
+
+          {selected && !lens && (
             <aside className="detail-panel" aria-label={t("itemDetails")}>
               <div className="detail-heading">
                 <span className={`detail-icon detail-icon--${selected.kind}`}>
@@ -745,6 +876,9 @@ export function ScanWorkspace({
                       </div>
                     )}
                   </dl>
+                  {selected.flags.includes("approximate") && (
+                    <p className="detail-note">{t("approximateSizes")}</p>
+                  )}
                   <div className="detail-actions">
                     <button
                       className="button button--primary button--full"
@@ -801,7 +935,7 @@ export function ScanWorkspace({
                   {selected.parentId !== null && (
                     <button
                       className="danger-link"
-                      onClick={() => setDeleteOpen(true)}
+                      onClick={() => onRequestDelete(selected)}
                     >
                       {t("permanentlyDelete")}
                     </button>
@@ -811,13 +945,18 @@ export function ScanWorkspace({
             </aside>
           )}
         </main>
-      ) : status === "failed" ? (
+      ) : scan.kind === "failed" ? (
         <main className="failure-state">
           <span>
             <Warning size={28} weight="fill" />
           </span>
           <h1>{t("scanFailureTitle")}</h1>
           <p>{t("scanFailureDescription")}</p>
+          {scan.message && (
+            <p className="mono" dir="auto">
+              {scan.message}
+            </p>
+          )}
           <div>
             <button className="button button--primary" onClick={onRescan}>
               {t("tryAgain")}
@@ -827,24 +966,23 @@ export function ScanWorkspace({
             </button>
           </div>
         </main>
-      ) : null}
-
-      <DeleteDialog
-        node={selected}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        onConfirm={async () => {
-          try {
-            if (!scanId || !selected) return;
-            await performFileAction(scanId, selected.id, "delete");
-            onNotify(t("permanentlyDeleted", { name: selected.name }));
-            onSelect(null);
-            onReload();
-          } catch (error) {
-            onNotify(String(error), "error");
-          }
-        }}
-      />
+      ) : (
+        <main className="failure-state">
+          <span>
+            <Info size={28} />
+          </span>
+          <h1>{t("emptyResultTitle")}</h1>
+          <p>{t(partial ? "emptyResultPartial" : "emptyResultUnavailable")}</p>
+          <div>
+            <button className="button button--primary" onClick={onRescan}>
+              {t("rescan")}
+            </button>
+            <button className="button button--quiet" onClick={onOverview}>
+              {t("returnToOverview")}
+            </button>
+          </div>
+        </main>
+      )}
     </div>
   );
 }

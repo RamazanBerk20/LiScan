@@ -135,10 +135,59 @@ entry, scalable icon, and KDE service menu.
 
 ```text
 liscan [--admin] [--home] [--new-window] [PATH_OR_URI]
+liscan --json [--admin] [--top N] PATH
 ```
 
 `--admin` accepts absolute local paths only. `--home` scans the current user's
-home folder. Without a target, LiScan opens its overview.
+home folder. Without a target, LiScan opens its overview. `liscan --help`
+lists everything.
+
+### Headless JSON mode
+
+`liscan --json PATH` scans without opening a window and prints exactly one JSON
+document to stdout (diagnostics go to stderr), using the same scanner as the
+interface and your saved scan options. `--admin` runs the administrator scan;
+`--top N` (default 50) limits `top`, the largest folders and files below the
+target, largest first (the target itself is not listed).
+
+```json
+{"schema":1,"target":"/srv","status":"complete","summary":{"files":3,"…":"…"},
+ "top":[{"path":"/srv/a","path_lossy":false,"kind":"dir","size_bytes":4096,
+         "apparent_bytes":10,"items":2}],"issues_count":0}
+```
+
+`status` is `complete`, `complete_with_issues` or `cancelled`; `summary` uses
+the interface's field names (camelCase). A path that is not valid UTF-8 is
+printed lossily with `"path_lossy":true`. Exit codes: 0 for a finished scan
+(with or without issues), 1 for a failure (`{"schema":1,"error":"…"}`), 130
+when interrupted with Ctrl+C (the scan is cancelled cleanly and the partial
+document is printed).
+
+## Scan history and what grew
+
+After every finished scan LiScan keeps a compact snapshot (target, time, total
+size, and the size of every folder down to four levels below the target) in
+`~/.local/share/liscan/history/`, newest 10 per target. When an earlier scan of
+the same target exists, **Compare** lists them by date. Choosing one opens a
+**What changed** panel with the totals and the folders that grew and shrank
+(signed sizes, before → after); selecting a row shows that folder on the map,
+which is coloured by change while the comparison is open. Turn history off or
+clear it in Settings. Cancelled scans and administrator scans are not saved (an administrator scan
+can list folders only root may see), so they cannot be compared.
+
+## Reclaimable lens
+
+**Reclaimable** answers "what can I get back": it recognises well-known caches
+and build output in the finished scan (user and thumbnail caches, the trash,
+pacman/apt/dnf caches, the systemd journal, core dumps, npm/pnpm/Yarn/pip and
+Cargo caches, Rust `target` folders, `node_modules`, Docker and Flatpak data),
+shows how big each is, why it is usually safe, and the command to run. LiScan
+never deletes or runs anything for these: copy the command and run it yourself.
+Matches inside other matches are counted once (the user cache is split into its
+specific caches and the remainder). `node_modules` counts only beside a
+`package.json`; Docker, Flatpak and the journal are listed but left out of the
+total because the space actually freed cannot be known in advance. The rule table is in
+`src-tauri/src/reclaim.rs`.
 
 ## License
 

@@ -79,7 +79,14 @@ export interface ScanSummary {
 }
 
 export interface ScanEvent {
-  event: "started" | "progress" | "issue" | "completed" | "cancelled" | "failed";
+  event:
+    | "authorizing"
+    | "started"
+    | "progress"
+    | "issue"
+    | "completed"
+    | "cancelled"
+    | "failed";
   scanId?: string;
   progress?: ScanProgress;
   issue?: ScanIssue;
@@ -129,6 +136,7 @@ export interface Settings {
   byteUnitScale: ByteUnitScale;
   contrast: number;
   showSidebar: boolean;
+  keepHistory: boolean;
   scanOptions: ScanOptions;
 }
 
@@ -136,3 +144,52 @@ export interface AppError {
   title: string;
   detail: string;
 }
+
+export interface SnapshotInfo {
+  /** Unix seconds; also the snapshot's id. */
+  timestamp: number;
+  total: number;
+}
+
+export interface DiffRow {
+  path: string;
+  before: number;
+  after: number;
+  delta: number;
+  /** Folder of the current scan, null when it no longer exists. */
+  nodeId: number | null;
+}
+
+export interface ScanDiff {
+  beforeTimestamp: number;
+  beforeTotal: number;
+  afterTotal: number;
+  delta: number;
+  rows: DiffRow[];
+}
+
+export interface ReclaimMatch {
+  ruleId: string;
+  /** Message keys owned by the interface (lib/i18n.tsx). */
+  titleKey: string;
+  explanationKey: string;
+  command: string | null;
+  warning: boolean;
+  /** False when the real saving is unknowable; not part of the total. */
+  counted: boolean;
+  path: string;
+  sizeBytes: number;
+  nodeId: number;
+}
+
+export interface Reclaimable {
+  totalBytes: number;
+  matches: ReclaimMatch[];
+  /** Matches left out of the list by the backend's cap. */
+  more: number;
+}
+
+/** What a finished scan is currently being viewed through, if anything. */
+export type Lens =
+  | { kind: "compare"; diff: ScanDiff }
+  | { kind: "reclaim"; data: Reclaimable };

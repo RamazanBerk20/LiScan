@@ -1908,6 +1908,7 @@ dependencies = [
  "gio 0.22.8",
  "serde",
  "serde_json",
+ "sha2",
  "sysinfo",
  "tauri",
  "tauri-build",

@@ -2,7 +2,8 @@ use crate::model::{ScanIssue, ScanNode, ScanProgress, ScanRequest, ScanSummary, 
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::io::{self, Read, Write};
 
-pub const PROTOCOL_VERSION: u16 = 2;
+// 3: `ScanNode.local_path` is a raw byte string instead of UTF-8 text.
+pub const PROTOCOL_VERSION: u16 = 3;
 const MAX_FRAME_SIZE: usize = 16 * 1024 * 1024;
 const TREE_NODE_CHUNK_SIZE: usize = 256;
 const TREE_ISSUE_CHUNK_SIZE: usize = 256;
@@ -354,6 +355,41 @@ mod tests {
         assert_eq!(tree.nodes[0].children.len(), 599);
         assert_eq!(tree.nodes[599].parent_id, Some(0));
         assert_eq!(tree.issues.len(), 1);
+    }
+
+    #[test]
+    fn non_utf8_local_path_round_trips_byte_exact() {
+        use std::os::unix::ffi::{OsStrExt, OsStringExt};
+        let raw = b"/tmp/caf\xe9-\xff".to_vec();
+        let mut tree = test_tree();
+        tree.nodes.truncate(2);
+        tree.nodes[0].children = vec![1];
+        tree.nodes[1].local_path = Some(PathBuf::from(std::ffi::OsString::from_vec(raw.clone())));
+        tree.nodes[1].display_path = "/tmp/caf\u{fffd}-\u{fffd}".into();
+
+        let mut wire = Vec::new();
+        write_scan_tree(&mut wire, tree).unwrap();
+        let mut reader = Cursor::new(wire);
+        let mut assembler = ScanTreeAssembler::default();
+        loop {
+            match read_frame::<AdminMessage>(&mut reader).unwrap() {
+                AdminMessage::TreeStart {
+                    root_id,
+                    summary,
+                    node_count,
+                    issue_count,
+                } => assembler
+                    .start(root_id, summary, node_count, issue_count)
+                    .unwrap(),
+                AdminMessage::TreeNodes(nodes) => assembler.push_nodes(nodes).unwrap(),
+                AdminMessage::TreeIssues(issues) => assembler.push_issues(issues).unwrap(),
+                AdminMessage::TreeEnd => break,
+                message => panic!("unexpected message: {message:?}"),
+            }
+        }
+        let tree = assembler.finish().unwrap();
+        let path = tree.nodes[1].local_path.as_ref().unwrap();
+        assert_eq!(path.as_os_str().as_bytes(), raw.as_slice());
     }
 
     #[test]

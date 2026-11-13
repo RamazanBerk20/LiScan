@@ -12,10 +12,24 @@ pub fn settings_path() -> PathBuf {
 
 pub fn load_settings() -> Settings {
     let path = settings_path();
-    let Ok(data) = fs::read(path) else {
+    let Ok(data) = fs::read(&path) else {
         return Settings::default();
     };
-    serde_json::from_slice(&data).unwrap_or_default()
+    serde_json::from_slice(&data).unwrap_or_else(|error| {
+        // Keep the unreadable file so the next save cannot silently overwrite it.
+        let backup = path.with_extension("json.bad");
+        let kept = fs::rename(&path, &backup).is_ok();
+        eprintln!(
+            "LiScan: settings in {} could not be read ({error}); using defaults{}",
+            path.display(),
+            if kept {
+                format!(", original kept as {}", backup.display())
+            } else {
+                String::new()
+            }
+        );
+        Settings::default()
+    })
 }
 
 pub fn save_settings(settings: &Settings) -> io::Result<()> {

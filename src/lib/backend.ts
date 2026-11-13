@@ -3,12 +3,16 @@ import { open } from "@tauri-apps/plugin-dialog";
 import type {
   NodeDetail,
   NodeSummary,
+  Reclaimable,
+  ScanDiff,
   ScanEvent,
   ScanRequest,
   Settings,
+  SnapshotInfo,
   ViewNode,
   VolumeInfo
 } from "../types";
+import type { ChildrenPage } from "./scanMachine";
 
 const isTauri = () => "__TAURI_INTERNALS__" in window;
 
@@ -162,6 +166,7 @@ const defaultSettings: Settings = {
   byteUnitScale: "binary",
   contrast: 72,
   showSidebar: true,
+  keepHistory: true,
   scanOptions: {
     crossFilesystems: false,
     includeRemoteMounts: false,
@@ -234,11 +239,18 @@ export async function getLaunchRequest(): Promise<ScanRequest | null> {
 
 export async function startScan(
   request: ScanRequest,
-  onEvent: (event: ScanEvent) => void
+  onEvent: (event: ScanEvent) => void,
+  generation = 0
 ): Promise<string> {
   if (!isTauri()) {
     const id = crypto.randomUUID();
-    onEvent({ event: "started", scanId: id });
+    onEvent({
+      event: request.mode === "administrator" ? "authorizing" : "started",
+      scanId: id
+    });
+    if (request.mode === "administrator") {
+      window.setTimeout(() => onEvent({ event: "started", scanId: id }), 120);
+    }
     window.setTimeout(
       () =>
         onEvent({
@@ -278,12 +290,22 @@ export async function startScan(
 
   const channel = new Channel<ScanEvent>();
   channel.onmessage = onEvent;
-  return invoke<string>("start_scan", { request, onEvent: channel });
+  return invoke<string>("start_scan", {
+    request,
+    onEvent: channel,
+    generation
+  });
 }
 
 export async function cancelScan(scanId: string): Promise<void> {
   if (!isTauri()) return;
   await invoke("cancel_scan", { scanId });
+}
+
+/** Frees a scan the window no longer shows; a running scan is cancelled. */
+export async function releaseScan(scanId: string): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("release_scan", { scanId });
 }
 
 export async function getView(
@@ -299,14 +321,25 @@ export async function getView(
   });
 }
 
+export const CHILDREN_PAGE_SIZE = 240;
+
 export async function getChildren(
   scanId: string,
-  nodeId?: number
-): Promise<NodeSummary[]> {
-  if (!isTauri()) return demoTree.children;
-  return invoke<NodeSummary[]>("get_children", {
+  nodeId?: number,
+  offset = 0,
+  limit = CHILDREN_PAGE_SIZE
+): Promise<ChildrenPage> {
+  if (!isTauri()) {
+    return {
+      items: demoTree.children.slice(offset, offset + limit),
+      total: demoTree.children.length
+    };
+  }
+  return invoke<ChildrenPage>("get_children", {
     scanId,
-    nodeId: nodeId ?? null
+    nodeId: nodeId ?? null,
+    offset,
+    limit
   });
 }
 
@@ -344,4 +377,27 @@ export async function performFileAction(
     nodeId,
     action
   });
+}
+
+/** Earlier scans of this scan's target, newest first. */
+export async function listSnapshots(scanId: string): Promise<SnapshotInfo[]> {
+  if (!isTauri()) return [];
+  return invoke<SnapshotInfo[]>("list_snapshots", { scanId });
+}
+
+export async function compareScan(
+  scanId: string,
+  snapshot: number
+): Promise<ScanDiff> {
+  return invoke<ScanDiff>("compare_scan", { scanId, snapshot });
+}
+
+export async function getReclaimable(scanId: string): Promise<Reclaimable> {
+  if (!isTauri()) return { totalBytes: 0, matches: [], more: 0 };
+  return invoke<Reclaimable>("reclaimable", { scanId });
+}
+
+export async function clearHistory(): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("clear_history");
 }

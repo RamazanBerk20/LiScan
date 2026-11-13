@@ -56,6 +56,8 @@ pub struct ScanNode {
     pub name: String,
     pub display_path: String,
     pub uri: String,
+    /// Raw bytes on the wire: Linux names need not be UTF-8, and trash/delete act on this path.
+    #[serde(with = "path_bytes")]
     pub local_path: Option<PathBuf>,
     pub kind: NodeKind,
     pub allocated_bytes: u64,
@@ -67,6 +69,55 @@ pub struct ScanNode {
     pub permissions: Option<String>,
     pub hard_links: u64,
     pub flags: Vec<String>,
+}
+
+mod path_bytes {
+    use serde::{Deserializer, Serializer, de};
+    use std::ffi::OsString;
+    use std::fmt;
+    use std::os::unix::ffi::{OsStrExt, OsStringExt};
+    use std::path::PathBuf;
+
+    pub fn serialize<S: Serializer>(
+        path: &Option<PathBuf>,
+        serializer: S,
+    ) -> Result<S::Ok, S::Error> {
+        match path {
+            Some(path) => serializer.serialize_bytes(path.as_os_str().as_bytes()),
+            None => serializer.serialize_none(),
+        }
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(
+        deserializer: D,
+    ) -> Result<Option<PathBuf>, D::Error> {
+        struct Visitor;
+        impl<'de> de::Visitor<'de> for Visitor {
+            type Value = Option<PathBuf>;
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a path as a byte string")
+            }
+            fn visit_none<E: de::Error>(self) -> Result<Self::Value, E> {
+                Ok(None)
+            }
+            fn visit_unit<E: de::Error>(self) -> Result<Self::Value, E> {
+                Ok(None)
+            }
+            fn visit_some<D: Deserializer<'de>>(
+                self,
+                deserializer: D,
+            ) -> Result<Self::Value, D::Error> {
+                deserializer.deserialize_bytes(self)
+            }
+            fn visit_bytes<E: de::Error>(self, bytes: &[u8]) -> Result<Self::Value, E> {
+                Ok(Some(PathBuf::from(OsString::from_vec(bytes.to_vec()))))
+            }
+            fn visit_byte_buf<E: de::Error>(self, bytes: Vec<u8>) -> Result<Self::Value, E> {
+                Ok(Some(PathBuf::from(OsString::from_vec(bytes))))
+            }
+        }
+        deserializer.deserialize_option(Visitor)
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -219,6 +270,13 @@ pub struct ScanEvent {
 }
 
 impl ScanEvent {
+    pub fn authorizing(scan_id: String) -> Self {
+        Self {
+            event: "authorizing".into(),
+            ..Self::started(scan_id)
+        }
+    }
+
     pub fn started(scan_id: String) -> Self {
         Self {
             event: "started".into(),
@@ -349,6 +407,7 @@ pub struct Settings {
     pub byte_unit_scale: ByteUnitScale,
     pub contrast: u8,
     pub show_sidebar: bool,
+    pub keep_history: bool,
     pub scan_options: ScanOptions,
 }
 
@@ -361,6 +420,7 @@ impl Default for Settings {
             byte_unit_scale: ByteUnitScale::Binary,
             contrast: 72,
             show_sidebar: true,
+            keep_history: true,
             scan_options: ScanOptions::default(),
         }
     }

@@ -12,10 +12,21 @@ import {
 } from "react";
 import type { ByteUnitScale, ColorScheme, ViewNode } from "../types";
 import { formatBytes } from "../lib/format";
+import { formatDelta, insideAny, intensity } from "../lib/lens";
 import { useI18n } from "../lib/i18n";
+
+/** Recolours the map: by change since an earlier scan, or by reclaimable match. */
+export type MapLens =
+  | { kind: "compare"; deltas: Map<string, number>; max: number }
+  | { kind: "reclaim"; paths: string[] };
+
+export const GROW_COLOR = "#d9480f";
+export const SHRINK_COLOR = "#1c7ed6";
+const NEUTRAL_COLOR = "#8a948f";
 
 interface RadialMapProps {
   root: ViewNode;
+  lens?: MapLens | null;
   scheme: ColorScheme;
   contrast: number;
   byteUnitScale: ByteUnitScale;
@@ -86,6 +97,31 @@ function colorFor(
   return mixWithSurface(base, amount, selected);
 }
 
+/** Fill for a segment under a lens; `dim` is set for what the lens sets aside. */
+function lensFill(
+  node: HierarchyRectangularNode<ViewNode>,
+  lens: MapLens
+): { fill: string; dim: boolean } {
+  const path = node.data.displayPath;
+  if (lens.kind === "reclaim") {
+    return node.data.kind === "directory" && insideAny(path, lens.paths)
+      ? { fill: "", dim: false }
+      : { fill: mixWithSurface(NEUTRAL_COLOR, 0.62, false), dim: true };
+  }
+  const delta =
+    node.data.kind === "directory" ? lens.deltas.get(path) : undefined;
+  if (!delta) return { fill: mixWithSurface(NEUTRAL_COLOR, 0.5, false), dim: true };
+  const strength = intensity(delta, lens.max);
+  return {
+    fill: mixWithSurface(
+      delta > 0 ? GROW_COLOR : SHRINK_COLOR,
+      0.7 * (1 - strength),
+      false
+    ),
+    dim: false
+  };
+}
+
 function mixWithSurface(hex: string, amount: number, selected: boolean) {
   const dark = document.documentElement.dataset.theme === "dark";
   const target = dark ? [32, 38, 35] : [238, 242, 240];
@@ -104,6 +140,7 @@ function mixWithSurface(hex: string, amount: number, selected: boolean) {
 
 export function RadialMap({
   root,
+  lens = null,
   scheme,
   contrast,
   byteUnitScale,
@@ -184,16 +221,16 @@ export function RadialMap({
       context.arc(0, 0, outer, start, end);
       context.arc(0, 0, inner, end, start, true);
       context.closePath();
-      context.fillStyle = colorFor(
-        node,
-        scheme,
-        contrast,
-        node.data.id === selectedId
-      );
+      const under = lens ? lensFill(node, lens) : null;
+      context.fillStyle =
+        under?.fill ||
+        colorFor(node, scheme, contrast, node.data.id === selectedId);
       context.fill();
-      context.lineWidth = node.data.id === selectedId ? 2.5 : 1;
+      const matched =
+        lens?.kind === "reclaim" && lens.paths.includes(node.data.displayPath);
+      context.lineWidth = node.data.id === selectedId ? 2.5 : matched ? 2 : 1;
       context.strokeStyle =
-        node.data.id === selectedId
+        node.data.id === selectedId || matched
           ? styles.getPropertyValue("--focus-ring").trim() || "#075f44"
           : surface;
       context.stroke();
@@ -215,7 +252,7 @@ export function RadialMap({
           context.rotate(Math.PI);
         }
         context.font = "600 11px system-ui, sans-serif";
-        context.fillStyle = "#f8faf9";
+        context.fillStyle = under?.dim ? text : "#f8faf9";
         context.textAlign = "center";
         context.textBaseline = "middle";
         let output = label;
@@ -260,6 +297,7 @@ export function RadialMap({
     byteUnitScale,
     contrast,
     layout,
+    lens,
     locale,
     root,
     scheme,
@@ -346,6 +384,15 @@ export function RadialMap({
               locale
             )}
           </span>
+          {lens?.kind === "compare" && lens.deltas.has(hovered.node.displayPath) && (
+            <span dir="ltr">
+              {formatDelta(
+                lens.deltas.get(hovered.node.displayPath) ?? 0,
+                byteUnitScale,
+                locale
+              )}
+            </span>
+          )}
           <small dir="auto">{hovered.node.displayPath}</small>
         </div>
       )}

@@ -11,13 +11,20 @@ import {
   X
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
-import type { AppLocale, NodeDetail, ScanIssue, Settings } from "../types";
+import type {
+  AppLocale,
+  NodeDetail,
+  ScanIssue,
+  ScanSummary,
+  Settings
+} from "../types";
 import { chooseFolder } from "../lib/backend";
 import {
   issueLabel,
   languageOptions,
   useI18n
 } from "../lib/i18n";
+import { formatCount } from "../lib/format";
 import { LiScanMark } from "./Brand";
 
 function DialogFrame({
@@ -163,14 +170,19 @@ export function AdminDialog({
 export function RemoteDialog({
   open,
   onOpenChange,
+  initialUri = "sftp://",
   onStart
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialUri?: string;
   onStart: (uri: string) => void;
 }) {
   const { t } = useI18n();
-  const [uri, setUri] = useState("sftp://");
+  const [uri, setUri] = useState(initialUri);
+  useEffect(() => {
+    if (open) setUri(initialUri);
+  }, [initialUri, open]);
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <DialogFrame
@@ -248,21 +260,27 @@ export function SettingsDialog({
   onOpenChange,
   settings,
   systemLocale,
-  onSave
+  onSave,
+  onClearHistory
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   settings: Settings;
   systemLocale: AppLocale;
   onSave: (settings: Settings) => void;
+  onClearHistory: () => void;
 }) {
   const { locale, t } = useI18n();
   const [draft, setDraft] = useState(settings);
   const systemLanguageName =
     languageOptions.find((option) => option.value === systemLocale)?.label ??
     "English";
+  const [confirmingClear, setConfirmingClear] = useState(false);
   useEffect(() => {
-    if (open) setDraft(structuredClone(settings));
+    if (open) {
+      setDraft(structuredClone(settings));
+      setConfirmingClear(false);
+    }
   }, [open, settings]);
 
   const updateOptions = (next: Partial<Settings["scanOptions"]>) =>
@@ -441,6 +459,46 @@ export function SettingsDialog({
               label={t("showSmallFiles")}
               description={t("showSmallFilesDescription")}
             />
+            <SettingSwitch
+              checked={draft.keepHistory}
+              onCheckedChange={(keepHistory) =>
+                setDraft((current) => ({ ...current, keepHistory }))
+              }
+              label={t("keepHistory")}
+              description={t("keepHistoryDescription")}
+            />
+            <div className="history-clear">
+              {confirmingClear ? (
+                <div role="alertdialog" aria-label={t("clearHistory")}>
+                  <p>{t("clearHistoryConfirm")}</p>
+                  <div className="history-clear__actions">
+                    <button
+                      className="button button--danger"
+                      autoFocus
+                      onClick={() => {
+                        onClearHistory();
+                        setConfirmingClear(false);
+                      }}
+                    >
+                      {t("deleteHistory")}
+                    </button>
+                    <button
+                      className="button button--quiet"
+                      onClick={() => setConfirmingClear(false)}
+                    >
+                      {t("cancel")}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  className="button button--quiet-border"
+                  onClick={() => setConfirmingClear(true)}
+                >
+                  {t("clearHistory")}
+                </button>
+              )}
+            </div>
           </section>
         </div>
         <div className="dialog-actions">
@@ -521,21 +579,29 @@ export function DeleteDialog({
   );
 }
 
+/** Rows rendered at once; the totals still count every issue. */
+export const COVERAGE_ROW_LIMIT = 1000;
+
 export function CoverageDialog({
   open,
   onOpenChange,
-  issues
+  issues,
+  summary = null
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   issues: ScanIssue[];
+  /** When known, its counts are used because `issues` may be truncated. */
+  summary?: ScanSummary | null;
 }) {
-  const { t } = useI18n();
-  const failures = issues.filter(
+  const { locale, t } = useI18n();
+  const listedFailures = issues.filter(
     (issue) =>
       issue.kind !== "excluded" && issue.kind !== "filesystem_boundary"
-  );
-  const exclusions = issues.length - failures.length;
+  ).length;
+  const failures = summary?.issues ?? listedFailures;
+  const exclusions = summary?.excluded ?? issues.length - listedFailures;
+  const hidden = failures + exclusions - Math.min(issues.length, COVERAGE_ROW_LIMIT);
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <DialogFrame
@@ -545,7 +611,7 @@ export function CoverageDialog({
       >
         <div className="coverage-summary">
           <div>
-            <strong>{failures.length}</strong>
+            <strong>{failures}</strong>
             <span>{t("readIssues")}</span>
           </div>
           <div>
@@ -554,13 +620,13 @@ export function CoverageDialog({
           </div>
         </div>
         <div className="coverage-list">
-          {issues.length === 0 ? (
+          {failures + exclusions === 0 ? (
             <div className="coverage-clear">
               <Check size={21} weight="bold" />
               {t("coverageClear")}
             </div>
           ) : (
-            issues.map((issue, index) => (
+            issues.slice(0, COVERAGE_ROW_LIMIT).map((issue, index) => (
               <div className="coverage-row" key={`${issue.path}-${index}`}>
                 <span
                   className={`coverage-row__icon coverage-row__icon--${issue.kind}`}
@@ -578,6 +644,11 @@ export function CoverageDialog({
                 </span>
               </div>
             ))
+          )}
+          {hidden > 0 && (
+            <div className="coverage-row coverage-row--more">
+              {t("moreItems", { count: formatCount(hidden, locale) })}
+            </div>
           )}
         </div>
         <div className="dialog-actions">
