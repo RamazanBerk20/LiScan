@@ -2055,6 +2055,18 @@ button:disabled {
   font-weight: 650;
 }
 
+.about-link {
+  margin-top: 14px;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 10px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* Toast */
 
 .toast {

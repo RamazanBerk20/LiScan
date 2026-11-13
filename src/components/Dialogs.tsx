@@ -18,7 +18,7 @@ import type {
   ScanSummary,
   Settings
 } from "../types";
-import { chooseFolder } from "../lib/backend";
+import { chooseFolder, openSponsorPage } from "../lib/backend";
 import {
   issueLabel,
   languageOptions,
@@ -685,6 +685,13 @@ export function AboutDialog({
               <dd>GPL-3.0-or-later</dd>
             </div>
           </dl>
+          <button
+            type="button"
+            className="about-link"
+            onClick={() => void openSponsorPage()}
+          >
+            {t("sponsorLink")}
+          </button>
         </div>
         <div className="dialog-actions">
           <Dialog.Close className="button button--primary">

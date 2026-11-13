@@ -829,6 +829,11 @@ fn open_uri(uri: &str) -> Result<(), String> {
         .map_err(|error| format!("Could not open item: {error}"))
 }
 
+#[tauri::command]
+pub fn open_sponsor_page() -> Result<(), String> {
+    open_uri("https://github.com/sponsors/RamazanBerk20")
+}
+
 fn reveal_node(node: &ScanNode) -> Result<(), String> {
     let Some(path) = node.local_path.as_ref() else {
         return open_uri(&node.uri);

@@ -1,7 +1,10 @@
 # LiScan security model
 
 LiScan scans file metadata locally. It does not upload file names, paths,
-sizes, or contents, and it does not include analytics.
+sizes, or contents, and it does not include analytics. It makes no network
+requests of its own; the only external link (Support development, in the About
+dialog) opens the project's GitHub Sponsors page in your default browser when
+you click it.
 
 ## Administrator scans
 

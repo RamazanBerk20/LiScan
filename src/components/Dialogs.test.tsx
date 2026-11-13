@@ -2,7 +2,13 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { Settings } from "../types";
 import { I18nProvider } from "../lib/i18n";
-import { SettingsDialog } from "./Dialogs";
+import { openSponsorPage } from "../lib/backend";
+import { AboutDialog, SettingsDialog } from "./Dialogs";
+
+vi.mock("../lib/backend", async (original) => ({
+  ...(await original<typeof import("../lib/backend")>()),
+  openSponsorPage: vi.fn()
+}));
 
 const settings: Settings = {
   language: "system",
@@ -49,5 +55,20 @@ describe("SettingsDialog localization", () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ language: "tr" })
     );
+  });
+});
+
+describe("AboutDialog", () => {
+  it("offers a quiet sponsor link that only acts on click", () => {
+    render(
+      <I18nProvider locale="en">
+        <AboutDialog open onOpenChange={() => undefined} />
+      </I18nProvider>
+    );
+    expect(openSponsorPage).not.toHaveBeenCalled();
+    fireEvent.click(
+      screen.getByRole("button", { name: "Support development on GitHub Sponsors" })
+    );
+    expect(openSponsorPage).toHaveBeenCalledTimes(1);
   });
 });

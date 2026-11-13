@@ -189,6 +189,11 @@ specific caches and the remainder). `node_modules` counts only beside a
 total because the space actually freed cannot be known in advance. The rule table is in
 `src-tauri/src/reclaim.rs`.
 
+## Support
+
+LiScan is free. If it is useful to you, you can
+[sponsor its development](https://github.com/sponsors/RamazanBerk20).
+
 ## License
 
 LiScan is licensed under GPL-3.0-or-later.

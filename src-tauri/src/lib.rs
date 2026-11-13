@@ -54,6 +54,7 @@ pub fn run() {
             commands::compare_scan,
             commands::reclaimable,
             commands::clear_history,
+            commands::open_sponsor_page,
         ])
         .run(tauri::generate_context!())
         .expect("error while running LiScan");

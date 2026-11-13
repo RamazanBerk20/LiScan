@@ -401,3 +401,8 @@ export async function clearHistory(): Promise<void> {
   if (!isTauri()) return;
   await invoke("clear_history");
 }
+
+export async function openSponsorPage(): Promise<void> {
+  if (!isTauri()) return;
+  await invoke("open_sponsor_page");
+}
