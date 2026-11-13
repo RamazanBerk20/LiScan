@@ -13,7 +13,7 @@ optdepends=(
   'kio: file-manager context menu integration'
 )
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('91c8d578916d4bd43bca0f888f487f208530c5ca9740604dbaff00a0711c0612')
+sha256sums=('b62eb9729cc80c2b3d6aa67552d1c72f8196adbd34f471dfc65095a18fcd6734')
 
 prepare() {
   cd "LiScan-$pkgver"
