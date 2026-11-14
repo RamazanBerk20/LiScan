@@ -46,6 +46,11 @@
   <url type="bugtracker">https://github.com/RamazanBerk20/LiScan/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="1.2.0" date="2026-11-14">
+      <description>
+        <p>LiScan now draws its own window bar with minimise, maximise and close buttons instead of the system title bar. Known limitation: while a dialog is open the window cannot be dragged by the bar.</p>
+      </description>
+    </release>
     <release version="1.1.0" date="2026-11-13">
       <description>
         <p>Fixes scan mix-ups and administrator scan failures; adds JSON output, scan history with a what-changed comparison, and a Reclaimable view. The administrator password is now asked for every administrator scan.</p>

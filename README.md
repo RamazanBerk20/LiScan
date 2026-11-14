@@ -125,8 +125,8 @@ the native `dpkg-deb` and `rpmbuild` tooling. Bundle output is written below
 `src-tauri/target/release/bundle`.
 
 Tagged releases publish ready-to-install DEB and RPM packages (x86_64 only) on
-[GitHub Releases](https://github.com/RamazanBerk20/LiScan/releases). v1.1.0
-ships `LiScan_1.1.0_amd64.deb` and `LiScan-1.1.0-1.x86_64.rpm`; there is no
+[GitHub Releases](https://github.com/RamazanBerk20/LiScan/releases). v1.2.0
+ships `LiScan_1.2.0_amd64.deb` and `LiScan-1.2.0-1.x86_64.rpm`; there is no
 AppImage. Arch Linux users can choose one of three AUR variants:
 
 ```bash

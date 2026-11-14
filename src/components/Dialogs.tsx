@@ -678,7 +678,7 @@ export function AboutDialog({
           <dl>
             <div>
               <dt>{t("version")}</dt>
-              <dd>1.1.0</dd>
+              <dd>1.2.0</dd>
             </div>
             <div>
               <dt>{t("license")}</dt>
