@@ -7,6 +7,10 @@ actions, remote-location support through GIO, and a narrowly scoped
 
 ![LiScan application icon](src-tauri/icons/icon.svg)
 
+![LiScan after scanning a sample home folder: capacity strip for the volume, folders listed largest first, and the radial map of the same tree](docs/images/overview.png)
+
+![The Reclaimable panel on the same scan, listing the trash and user caches with their sizes while the map highlights where they are](docs/images/reclaimable.png)
+
 ## Features
 
 - Scan a home folder, root filesystem, mounted volume, chosen folder, dropped
