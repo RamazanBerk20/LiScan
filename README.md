@@ -48,7 +48,10 @@ frame. The helper never follows symlinks or reads file contents, disables new
 privileges, excludes `/proc`, `/sys`, `/dev`, `/run`, and remote mounts, and
 reports every skipped path. Broad scans also skip filesystem snapshots and
 duplicate container mount views; selecting one of those folders directly scans
-it intentionally. File changes remain unprivileged.
+it intentionally. Polkit asks for the administrator password on every
+administrator scan; the authorization is never reused. File changes remain
+unprivileged. The app and the helper must be the same version, so reinstall the
+whole package when updating.
 
 See [SECURITY.md](SECURITY.md) for the complete boundary.
 
@@ -117,9 +120,10 @@ use `/usr/bin/pkexec` and the installed fixed helper path.
 the native `dpkg-deb` and `rpmbuild` tooling. Bundle output is written below
 `src-tauri/target/release/bundle`.
 
-Tagged releases publish ready-to-install DEB and RPM packages on
-[GitHub Releases](https://github.com/RamazanBerk20/LiScan/releases). Arch Linux
-users can choose one of three AUR variants:
+Tagged releases publish ready-to-install DEB and RPM packages (x86_64 only) on
+[GitHub Releases](https://github.com/RamazanBerk20/LiScan/releases). v1.1.0
+ships `LiScan_1.1.0_amd64.deb` and `LiScan-1.1.0-1.x86_64.rpm`; there is no
+AppImage. Arch Linux users can choose one of three AUR variants:
 
 ```bash
 yay -S liscan       # stable release, built from source
