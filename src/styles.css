@@ -304,28 +304,36 @@ button:disabled {
   display: grid;
   width: 100%;
   height: 100%;
-  grid-template-rows: 66px auto 42px;
-  overflow: auto;
+  grid-template-rows: 66px minmax(0, 1fr);
   background: var(--bg);
 }
 
+/* Only the page scrolls, so the scrollbar starts below the window bar. */
+.overview-scroll {
+  display: grid;
+  grid-template-rows: auto 42px;
+  overflow: auto;
+}
+
+/* Full width so it can be the window bar; the logo still lines up with the content column. */
 .overview-nav {
-  position: sticky;
-  z-index: 5;
-  top: 0;
   display: flex;
-  width: min(1120px, calc(100% - 48px));
+  width: 100%;
   height: 66px;
   align-items: center;
-  justify-content: space-between;
-  margin: 0 auto;
+  padding-inline: max(24px, calc((100% - 1120px) / 2));
   background: var(--bg);
+}
+
+.overview-nav:has(.window-controls) {
+  padding-inline-end: 12px;
 }
 
 .overview-nav__actions {
   display: flex;
   align-items: center;
   gap: 2px;
+  margin-inline-start: auto;
 }
 
 .overview {
@@ -684,6 +692,7 @@ button:disabled {
 }
 
 .workspace-header {
+  position: relative;
   display: flex;
   height: 58px;
   align-items: center;
@@ -691,6 +700,107 @@ button:disabled {
   border-bottom: 1px solid var(--border);
   padding: 0 12px;
   background: var(--surface);
+}
+
+/* Window buttons: round like the LiScan mark, set apart from the tools by the bar's divider. */
+.window-controls {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  border-inline-start: 1px solid var(--border);
+  padding-inline-start: 8px;
+}
+
+.window-button {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  transition:
+    background-color 130ms ease,
+    color 130ms ease;
+}
+
+.window-button:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.window-button--close:hover {
+  background: var(--danger);
+  color: var(--surface-raised);
+}
+
+.window-edge {
+  position: fixed;
+  z-index: 300;
+  width: 5px;
+  height: 5px;
+}
+
+.window-edge--n,
+.window-edge--s {
+  right: 5px;
+  left: 5px;
+  width: auto;
+  cursor: ns-resize;
+}
+
+.window-edge--e,
+.window-edge--w {
+  top: 5px;
+  bottom: 5px;
+  height: auto;
+  cursor: ew-resize;
+}
+
+.window-edge--n,
+.window-edge--ne,
+.window-edge--nw {
+  top: 0;
+}
+
+.window-edge--s,
+.window-edge--se,
+.window-edge--sw {
+  bottom: 0;
+}
+
+.window-edge--e,
+.window-edge--ne,
+.window-edge--se {
+  right: 0;
+}
+
+.window-edge--w,
+.window-edge--nw,
+.window-edge--sw {
+  left: 0;
+}
+
+.window-edge--ne,
+.window-edge--sw {
+  cursor: nesw-resize;
+}
+
+.window-edge--nw,
+.window-edge--se {
+  cursor: nwse-resize;
+}
+
+/* Undecorated windows have no frame of their own; draw the edge unless maximised. */
+html[data-window="normal"] body::after {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  border: 1px solid var(--border-strong);
+  content: "";
+  pointer-events: none;
 }
 
 .brand-button {
@@ -732,6 +842,7 @@ button:disabled {
 .path-bar {
   display: flex;
   min-width: 0;
+  max-width: 720px;
   height: 34px;
   flex: 1;
   align-items: center;
@@ -2338,6 +2449,11 @@ html[dir="rtl"] .toast {
   }
 
   .brand-button .brand-name {
+    display: none;
+  }
+
+  /* Icons only, so the window buttons still fit at the minimum width. */
+  .lens-button span {
     display: none;
   }
 

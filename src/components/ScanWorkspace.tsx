@@ -46,6 +46,7 @@ import { deltaIndex } from "../lib/lens";
 import { GROW_COLOR, RadialMap, SHRINK_COLOR, type MapLens } from "./RadialMap";
 import { ComparePanel, ReclaimPanel, formatDate } from "./LensPanel";
 import { CapacityStrip } from "./CapacityStrip";
+import { WindowControls } from "./WindowControls";
 
 /** Compare and Reclaimable views of a finished scan. */
 export interface Analysis {
@@ -361,7 +362,7 @@ export function ScanWorkspace({
         volume ? "workspace-shell--capacity" : ""
       }`}
     >
-      <header className="workspace-header">
+      <header className="workspace-header" data-tauri-drag-region="deep">
         <button
           className="brand-button"
           onClick={onOverview}
@@ -388,10 +389,12 @@ export function ScanWorkspace({
             <ArrowUp size={18} />
           </ToolbarButton>
         </div>
+        {/* The path stays selectable text; only the gaps around it move the window. */}
         <div
           className="path-bar"
           title={view?.displayPath ?? target}
           dir="auto"
+          data-tauri-drag-region="false"
         >
           <Folder size={16} weight="fill" />
           <span>{view?.displayPath ?? target}</span>
@@ -409,7 +412,7 @@ export function ScanWorkspace({
                       aria-label={t("compareWithEarlier")}
                     >
                       <GitDiff size={16} />
-                      {t("compare")}
+                      <span>{t("compare")}</span>
                     </button>
                   </DropdownMenu.Trigger>
                   <DropdownMenu.Portal>
@@ -442,10 +445,11 @@ export function ScanWorkspace({
                   lens?.kind === "reclaim" ? "lens-button--active" : ""
                 }`}
                 aria-pressed={lens?.kind === "reclaim"}
+                aria-label={t("reclaimable")}
                 onClick={analysis.onToggleReclaim}
               >
                 <Broom size={16} />
-                {t("reclaimable")}
+                <span>{t("reclaimable")}</span>
               </button>
             </>
           )}
@@ -479,6 +483,13 @@ export function ScanWorkspace({
             <Gear size={19} />
           </ToolbarButton>
         </div>
+        <WindowControls />
+        {/* While a scan runs, a hair-thin line travels along the bar's bottom edge. */}
+        {running && (
+          <div className="scan-progress-track" aria-hidden="true">
+            <span />
+          </div>
+        )}
       </header>
 
       <div className="workspace-summary">
@@ -566,11 +577,6 @@ export function ScanWorkspace({
               )}
             </button>
           </div>
-          {running && (
-            <div className="scan-progress-track" aria-hidden="true">
-              <span />
-            </div>
-          )}
         </div>
         {volume && (
           <CapacityStrip

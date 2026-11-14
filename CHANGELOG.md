@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+- LiScan draws its own window bar: the toolbar (and the start screen's top row) is now the title bar, with minimise, maximise and close at its end, so the system title bar no longer sits above it. Drag its empty space to move the window, double-click it to maximise; the path stays selectable text. The thin scan-progress line now runs along the bar's bottom edge instead of under the status strip.
+
 ## [1.1.0] - 2026-11-13
 
 ### Added

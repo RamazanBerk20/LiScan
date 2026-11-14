@@ -10,6 +10,9 @@ import type { AppLocale, LanguagePreference, ScanIssue } from "../types";
 const en = {
   close: "Close",
   dismiss: "Dismiss",
+  minimize: "Minimize",
+  maximize: "Maximize",
+  restore: "Restore",
   browse: "Browse",
   cancel: "Cancel",
   done: "Done",
@@ -286,6 +289,9 @@ type TranslationValues = Record<string, string | number>;
 const tr: Messages = {
   close: "Kapat",
   dismiss: "Bildirimi kapat",
+  minimize: "Küçült",
+  maximize: "Büyüt",
+  restore: "Geri yükle",
   browse: "Göz at",
   cancel: "İptal",
   done: "Tamam",
@@ -536,6 +542,9 @@ const tr: Messages = {
 const es: Messages = {
   close: "Cerrar",
   dismiss: "Descartar",
+  minimize: "Minimizar",
+  maximize: "Maximizar",
+  restore: "Restaurar",
   browse: "Examinar",
   cancel: "Cancelar",
   done: "Listo",
@@ -786,6 +795,9 @@ const es: Messages = {
 const it: Messages = {
   close: "Chiudi",
   dismiss: "Ignora",
+  minimize: "Riduci a icona",
+  maximize: "Ingrandisci",
+  restore: "Ripristina",
   browse: "Sfoglia",
   cancel: "Annulla",
   done: "Fine",
@@ -1036,6 +1048,9 @@ const it: Messages = {
 const fr: Messages = {
   close: "Fermer",
   dismiss: "Ignorer",
+  minimize: "Réduire",
+  maximize: "Agrandir",
+  restore: "Restaurer",
   browse: "Parcourir",
   cancel: "Annuler",
   done: "Terminé",
@@ -1286,6 +1301,9 @@ const fr: Messages = {
 const de: Messages = {
   close: "Schließen",
   dismiss: "Ausblenden",
+  minimize: "Minimieren",
+  maximize: "Maximieren",
+  restore: "Wiederherstellen",
   browse: "Durchsuchen",
   cancel: "Abbrechen",
   done: "Fertig",
@@ -1536,6 +1554,9 @@ const de: Messages = {
 const ru: Messages = {
   close: "Закрыть",
   dismiss: "Скрыть",
+  minimize: "Свернуть",
+  maximize: "Развернуть",
+  restore: "Восстановить",
   browse: "Обзор",
   cancel: "Отмена",
   done: "Готово",
@@ -1786,6 +1807,9 @@ const ru: Messages = {
 const ar: Messages = {
   close: "إغلاق",
   dismiss: "تجاهل",
+  minimize: "تصغير",
+  maximize: "تكبير",
+  restore: "استعادة",
   browse: "تصفح",
   cancel: "إلغاء",
   done: "تم",
@@ -2036,6 +2060,9 @@ const ar: Messages = {
 const zh: Messages = {
   close: "关闭",
   dismiss: "忽略",
+  minimize: "最小化",
+  maximize: "最大化",
+  restore: "还原",
   browse: "浏览",
   cancel: "取消",
   done: "完成",
@@ -2280,6 +2307,9 @@ const zh: Messages = {
 const ja: Messages = {
   close: "閉じる",
   dismiss: "閉じる",
+  minimize: "最小化",
+  maximize: "最大化",
+  restore: "元に戻す",
   browse: "参照",
   cancel: "キャンセル",
   done: "完了",
@@ -2530,6 +2560,9 @@ const ja: Messages = {
 const ko: Messages = {
   close: "닫기",
   dismiss: "무시",
+  minimize: "최소화",
+  maximize: "최대화",
+  restore: "복원",
   browse: "찾아보기",
   cancel: "취소",
   done: "완료",

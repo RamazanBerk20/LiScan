@@ -14,7 +14,7 @@ import type {
 } from "../types";
 import type { ChildrenPage } from "./scanMachine";
 
-const isTauri = () => "__TAURI_INTERNALS__" in window;
+export const isTauri = () => "__TAURI_INTERNALS__" in window;
 
 const demoTree: ViewNode = {
   id: 0,
